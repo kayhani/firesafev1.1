@@ -46,7 +46,7 @@ const SingleUserPage = async ({
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">
-                  {user.firstName + " " + user.lastName}
+                  {user.name}
                 </h1>
 
                 {role === "admin" && (
