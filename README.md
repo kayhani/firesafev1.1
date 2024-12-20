@@ -1,16 +1,4 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-# FiresafeV1.0
-
-=======
-
-# FiresafeV1.0
-
-> > > > > > > cbc6924 (son)
-=======
-# FiresafeV1.0
->>>>>>> 7003318 (son)
+# FiresafeV1.1
 
 ## Getting Started
 
@@ -33,10 +21,3 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
-
-<<<<<<< HEAD
-
-- # [Lama Dev Youtube Channel](https://youtube.com/lamadev)
-- [Lama Dev Youtube Channel](https://youtube.com/lamadev)
-  > > > > > > > cbc6924 (son)
-- [Next.js](https://nextjs.org/learn)
