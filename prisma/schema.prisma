@@ -11,6 +11,10 @@ enum UserRole {
   ADMIN
   USER
   GUEST
+  MUSTERI_SEVIYE1
+  MUSTERI_SEVIYE2
+  HIZMETSAGLAYICI_SEVIYE1
+  HIZMETSAGLAYICI_SEVIYE2
 }
 
 model User {
@@ -18,7 +22,6 @@ model User {
   name          String?
   email         String          @unique
   emailVerified DateTime?
-  image         String?
   password      String?
   role          UserRole        @default(GUEST)
   accounts      Account[]
@@ -26,8 +29,45 @@ model User {
   // Optional for WebAuthn support
   Authenticator Authenticator[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  firstName String?
+  lastName  String?
+  bloodType UserBloodType?
+  birthday  DateTime?
+  sex       UserSex?
+  photo     String?
+  phone     String?
+
+  registrationDate DateTime @default(now())
+
+  institutionId String?
+  institution   Institutions? @relation(fields: [institutionId], references: [id]) // İlişki Tanımı
+
+  ProviderDevices Devices[] @relation("Provider")
+
+  OwnerDevices Devices[] @relation("Owner")
+
+  CreatorOfferCards OfferCards[] @relation("Creator")
+
+  RecipientOfferCards OfferCards[] @relation("Recipient")
+
+  ProviderMaintenanceCards MaintenanceCards[] @relation("Provider")
+
+  CustomerMaintenanceCards MaintenanceCards[] @relation("Customer")
+
+  CreatorAppointments Appointments[] @relation("AppCreator")
+
+  ProviderAppointments Appointments[] @relation("AppRecipient")
+
+  CreatorNotifications   Notifications[] @relation("NotCreator")
+  RecipientNotifications Notifications[] @relation("NotRecipient")
+
+  Logs Logs[]
+
+  CreatorAnnouncements Announcements[] @relation("AnnCreator")
+
+  OfferRequests OfferRequests[] @relation("Creator")
 }
 
 model Account {
@@ -85,55 +125,6 @@ model Authenticator {
   @@id([userId, credentialID])
 }
 
-//ADMIN // MÜŞTERİ // SERVİS SAĞLAYICI  
-model Users {
-  id               String         @id @default(cuid())
-  userName         String         @unique
-  email            String
-  password         String
-  firstName        String?
-  lastName         String?
-  bloodType        UserBloodType?
-  birthday         DateTime?
-  sex              UserSex?
-  photo            String?
-  phone            String?
-  registrationDate DateTime       @default(now())
-
-  institutionId String
-  institution   Institutions @relation(fields: [institutionId], references: [id]) // İlişki Tanımı
-
-  roleId String
-  role   Roles  @relation(fields: [roleId], references: [id]) // İlişki Tanımı
-
-  ProviderDevices Devices[] @relation("Provider")
-
-  OwnerDevices Devices[] @relation("Owner")
-
-  CreatorOfferCards OfferCards[] @relation("Creator")
-
-  RecipientOfferCards OfferCards[] @relation("Recipient")
-
-  ProviderMaintenanceCards MaintenanceCards[] @relation("Provider")
-
-  CustomerMaintenanceCards MaintenanceCards[] @relation("Customer")
-
-  CreatorAppointments Appointments[] @relation("AppCreator")
-
-  ProviderAppointments Appointments[] @relation("AppRecipient")
-
-  CreatorNotifications   Notifications[] @relation("NotCreator")
-  RecipientNotifications Notifications[] @relation("NotRecipient")
-
-  Logs Logs[]
-
-  CreatorAnnouncements Announcements[] @relation("AnnCreator")
-
-
-  OfferRequests OfferRequests[] @relation("Creator")
-
-}
-
 // ŞİRKETLER
 model Institutions {
   id               String   @id @default(cuid())
@@ -143,7 +134,7 @@ model Institutions {
   phone            String
   registrationDate DateTime @default(now())
 
-  Users Users[]
+  User User[]
 
   ProviderInsDevices Devices[] @relation("ProviderIns")
 
@@ -167,18 +158,9 @@ model Institutions {
 
   CreatorAnnouncements Announcements[] @relation("AnnCreatorIns")
 
-
   IsgMembers IsgMembers[]
 
   OfferRequests OfferRequests[] @relation("CreatorIns")
-}
-
-//ROLLER Admin- I. Seviye Müşteri- II. Seviye Müşteri- I. Seviye Hizmet Sağlayıcı-  II. Seviye Hizmet Sağlayıcı
-model Roles {
-  id   String @id @default(cuid())
-  name String
-
-  Users Users[]
 }
 
 //CİHAZLAR Yangın Tüpü - Sprinkler vs
@@ -201,13 +183,13 @@ model Devices {
   feature   DeviceFeatures @relation(fields: [featureId], references: [id]) // İlişki Tanımı
 
   ownerId String
-  owner   Users  @relation("Owner", fields: [ownerId], references: [id]) // İlişki Tanımı
+  owner   User   @relation("Owner", fields: [ownerId], references: [id]) // İlişki Tanımı
 
   ownerInstId String
   ownerIns    Institutions @relation("OwnerIns", fields: [ownerInstId], references: [id]) // İlişki Tanımı
 
   providerId String
-  provider   Users  @relation("Provider", fields: [providerId], references: [id]) // İlişki Tanımı
+  provider   User   @relation("Provider", fields: [providerId], references: [id]) // İlişki Tanımı
 
   providerInstId String
   providerIns    Institutions @relation("ProviderIns", fields: [providerInstId], references: [id]) // İlişki Tanımı
@@ -280,13 +262,13 @@ model MaintenanceCards {
   deviceFeature   DeviceFeatures @relation(fields: [deviceFeatureId], references: [id]) // İlişki Tanımı
 
   providerId String
-  provider   Users  @relation("Provider", fields: [providerId], references: [id]) // İlişki Tanımı
+  provider   User   @relation("Provider", fields: [providerId], references: [id]) // İlişki Tanımı
 
   providerInsId String
   providerIns   Institutions @relation("ProviderIns", fields: [providerInsId], references: [id]) // İlişki Tanımı
 
   customerId String
-  customer   Users  @relation("Customer", fields: [customerId], references: [id]) // İlişki Tanımı
+  customer   User   @relation("Customer", fields: [customerId], references: [id]) // İlişki Tanımı
 
   customerInsId String
   customerIns   Institutions @relation("CustomerIns", fields: [customerInsId], references: [id]) // İlişki Tanımı
@@ -331,13 +313,13 @@ model OfferCards {
   status OfferStatus
 
   creatorId String
-  creator   Users  @relation("Creator", fields: [creatorId], references: [id]) // İlişki Tanımı
+  creator   User   @relation("Creator", fields: [creatorId], references: [id]) // İlişki Tanımı
 
   creatorInsId String
   creatorIns   Institutions @relation("CreatorIns", fields: [creatorInsId], references: [id]) // İlişki Tanımı
 
   recipientId String
-  recipient   Users  @relation("Recipient", fields: [recipientId], references: [id]) // İlişki Tanımı
+  recipient   User   @relation("Recipient", fields: [recipientId], references: [id]) // İlişki Tanımı
 
   recipientInsId String
   recipientIns   Institutions @relation("RecipientIns", fields: [recipientInsId], references: [id]) // İlişki Tanımı
@@ -363,27 +345,27 @@ model OfferSub {
 
 //Teklif Kartı, kim tarafından kime verilmiş tüm detayları tutyor
 model OfferRequests {
-  id           String   @id @default(cuid())
-  start        DateTime @default(now())
-  end          DateTime
+  id    String   @id @default(cuid())
+  start DateTime @default(now())
+  end   DateTime
 
   status RequestStatus
 
   creatorId String
-  creator   Users  @relation("Creator", fields: [creatorId], references: [id]) // İlişki Tanımı
+  creator   User   @relation("Creator", fields: [creatorId], references: [id]) // İlişki Tanımı
 
   creatorInsId String
   creatorIns   Institutions @relation("CreatorIns", fields: [creatorInsId], references: [id]) // İlişki Tanımı
 
-  details      String
+  details String
 
-  RequestSub  RequestSub[]
+  RequestSub RequestSub[]
 }
 
 model RequestSub {
   id String @id @default(cuid())
 
-  requiredDate  DateTime
+  requiredDate DateTime
 
   offerRequestId String
   offerRequest   OfferRequests @relation(fields: [offerRequestId], references: [id]) // İlişki Tanımı
@@ -391,8 +373,8 @@ model RequestSub {
   serviceId String
   service   Services @relation(fields: [serviceId], references: [id]) // İlişki Tanımı
 
-  quantity  Decimal
-  detail    String?
+  quantity Decimal
+  detail   String?
 }
 
 //Teklifte sunulan hizmetin başlıkları Örneğin Rutin Bakım, Eğitim, Danışmanlık, Ürün Satışı gibi
@@ -419,13 +401,13 @@ model Notifications {
   content String
 
   creatorId String
-  creator   Users  @relation("NotCreator", fields: [creatorId], references: [id]) // İlişki Tanımı
+  creator   User   @relation("NotCreator", fields: [creatorId], references: [id]) // İlişki Tanımı
 
   creatorInsId String
   creatorIns   Institutions @relation("NotCreatorIns", fields: [creatorInsId], references: [id]) // İlişki Tanımı
 
   recipientId String
-  recipient   Users  @relation("NotRecipient", fields: [recipientId], references: [id]) // İlişki Tanımı
+  recipient   User   @relation("NotRecipient", fields: [recipientId], references: [id]) // İlişki Tanımı
 
   recipientInsId String
   recipientIns   Institutions @relation("NotRecipientIns", fields: [recipientInsId], references: [id]) // İlişki Tanımı         
@@ -461,13 +443,13 @@ model Appointments {
   create  DateTime @default(now())
 
   creatorId String
-  creator   Users  @relation("AppCreator", fields: [creatorId], references: [id]) // İlişki Tanımı
+  creator   User   @relation("AppCreator", fields: [creatorId], references: [id]) // İlişki Tanımı
 
   creatorInsId String
   creatorIns   Institutions @relation("AppCreatorIns", fields: [creatorInsId], references: [id]) // İlişki Tanımı
 
   recipientId String
-  recipient   Users  @relation("AppRecipient", fields: [recipientId], references: [id]) // İlişki Tanımı
+  recipient   User   @relation("AppRecipient", fields: [recipientId], references: [id]) // İlişki Tanımı
 
   recipientInsId String
   recipientIns   Institutions @relation("AppRecipientIns", fields: [recipientInsId], references: [id]) // İlişki Tanımı
@@ -480,7 +462,7 @@ model Logs {
   date DateTime @default(now())
 
   userId String
-  user   Users  @relation(fields: [userId], references: [id]) // İlişki Tanımı
+  user   User   @relation(fields: [userId], references: [id]) // İlişki Tanımı
 
   actionId String
   action   Actions @relation(fields: [actionId], references: [id]) // İlişki Tanımı
@@ -515,12 +497,10 @@ model Announcements {
   date        DateTime
 
   creatorId String
-  creator   Users  @relation("AnnCreator", fields: [creatorId], references: [id]) // İlişki Tanımı
+  creator   User   @relation("AnnCreator", fields: [creatorId], references: [id]) // İlişki Tanımı
 
   creatorInsId String
   creatorIns   Institutions @relation("AnnCreatorIns", fields: [creatorInsId], references: [id]) // İlişki Tanımı
-
-  
 }
 
 model Teams {

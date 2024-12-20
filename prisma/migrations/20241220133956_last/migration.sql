@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'USER', 'GUEST');
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'USER', 'GUEST', 'MUSTERI_SEVIYE1', 'MUSTERI_SEVIYE2', 'HIZMETSAGLAYICI_SEVIYE1', 'HIZMETSAGLAYICI_SEVIYE2');
 
 -- CreateEnum
 CREATE TYPE "UserSex" AS ENUM ('Erkek', 'Kadin', 'Diger');
@@ -14,6 +14,9 @@ CREATE TYPE "DeviceStatus" AS ENUM ('Aktif', 'Pasif');
 CREATE TYPE "OfferStatus" AS ENUM ('Onaylandi', 'Red', 'Beklemede');
 
 -- CreateEnum
+CREATE TYPE "RequestStatus" AS ENUM ('Aktif', 'Pasif', 'Beklemede', 'Iptal', 'TeklifAlindi', 'Tamamlandi');
+
+-- CreateEnum
 CREATE TYPE "NotificationStatus" AS ENUM ('Okundu', 'Okunmadi');
 
 -- CreateTable
@@ -22,11 +25,19 @@ CREATE TABLE "User" (
     "name" TEXT,
     "email" TEXT NOT NULL,
     "emailVerified" TIMESTAMP(3),
-    "image" TEXT,
     "password" TEXT,
     "role" "UserRole" NOT NULL DEFAULT 'GUEST',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "firstName" TEXT,
+    "lastName" TEXT,
+    "bloodType" "UserBloodType",
+    "birthday" TIMESTAMP(3),
+    "sex" "UserSex",
+    "photo" TEXT,
+    "phone" TEXT,
+    "registrationDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "institutionId" TEXT,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -83,26 +94,6 @@ CREATE TABLE "Authenticator" (
 );
 
 -- CreateTable
-CREATE TABLE "Users" (
-    "id" TEXT NOT NULL,
-    "userName" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
-    "firstName" TEXT,
-    "lastName" TEXT,
-    "bloodType" "UserBloodType",
-    "birthday" TIMESTAMP(3),
-    "sex" "UserSex",
-    "photo" TEXT,
-    "phone" TEXT,
-    "registrationDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "institutionId" TEXT NOT NULL,
-    "roleId" TEXT NOT NULL,
-
-    CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Institutions" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -112,14 +103,6 @@ CREATE TABLE "Institutions" (
     "registrationDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Institutions_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Roles" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-
-    CONSTRAINT "Roles_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -239,6 +222,31 @@ CREATE TABLE "OfferSub" (
 );
 
 -- CreateTable
+CREATE TABLE "OfferRequests" (
+    "id" TEXT NOT NULL,
+    "start" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "end" TIMESTAMP(3) NOT NULL,
+    "status" "RequestStatus" NOT NULL,
+    "creatorId" TEXT NOT NULL,
+    "creatorInsId" TEXT NOT NULL,
+    "details" TEXT NOT NULL,
+
+    CONSTRAINT "OfferRequests_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "RequestSub" (
+    "id" TEXT NOT NULL,
+    "requiredDate" TIMESTAMP(3) NOT NULL,
+    "offerRequestId" TEXT NOT NULL,
+    "serviceId" TEXT NOT NULL,
+    "quantity" DECIMAL(65,30) NOT NULL,
+    "detail" TEXT,
+
+    CONSTRAINT "RequestSub_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Services" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -265,8 +273,8 @@ CREATE TABLE "Notifications" (
     "notificationDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "isRead" "NotificationStatus" NOT NULL,
     "typeId" TEXT NOT NULL,
-    "deviceId" TEXT NOT NULL,
-    "deviceTypeId" TEXT NOT NULL,
+    "deviceId" TEXT,
+    "deviceTypeId" TEXT,
 
     CONSTRAINT "Notifications_pkey" PRIMARY KEY ("id")
 );
@@ -331,8 +339,6 @@ CREATE TABLE "Announcements" (
     "date" TIMESTAMP(3) NOT NULL,
     "creatorId" TEXT NOT NULL,
     "creatorInsId" TEXT NOT NULL,
-    "recipientId" TEXT NOT NULL,
-    "recipientInsId" TEXT NOT NULL,
 
     CONSTRAINT "Announcements_pkey" PRIMARY KEY ("id")
 );
@@ -378,9 +384,6 @@ CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
 CREATE UNIQUE INDEX "Authenticator_credentialID_key" ON "Authenticator"("credentialID");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Users_userName_key" ON "Users"("userName");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Devices_serialNumber_key" ON "Devices"("serialNumber");
 
 -- CreateIndex
@@ -393,6 +396,9 @@ CREATE UNIQUE INDEX "_TeamsToTeamsMembers_AB_unique" ON "_TeamsToTeamsMembers"("
 CREATE INDEX "_TeamsToTeamsMembers_B_index" ON "_TeamsToTeamsMembers"("B");
 
 -- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_institutionId_fkey" FOREIGN KEY ("institutionId") REFERENCES "Institutions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -402,25 +408,19 @@ ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Authenticator" ADD CONSTRAINT "Authenticator_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Users" ADD CONSTRAINT "Users_institutionId_fkey" FOREIGN KEY ("institutionId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Users" ADD CONSTRAINT "Users_roleId_fkey" FOREIGN KEY ("roleId") REFERENCES "Roles"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Devices" ADD CONSTRAINT "Devices_typeId_fkey" FOREIGN KEY ("typeId") REFERENCES "DeviceTypes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Devices" ADD CONSTRAINT "Devices_featureId_fkey" FOREIGN KEY ("featureId") REFERENCES "DeviceFeatures"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Devices" ADD CONSTRAINT "Devices_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Devices" ADD CONSTRAINT "Devices_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Devices" ADD CONSTRAINT "Devices_ownerInstId_fkey" FOREIGN KEY ("ownerInstId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Devices" ADD CONSTRAINT "Devices_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Devices" ADD CONSTRAINT "Devices_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Devices" ADD CONSTRAINT "Devices_providerInstId_fkey" FOREIGN KEY ("providerInstId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -444,13 +444,13 @@ ALTER TABLE "MaintenanceCards" ADD CONSTRAINT "MaintenanceCards_deviceTypeId_fke
 ALTER TABLE "MaintenanceCards" ADD CONSTRAINT "MaintenanceCards_deviceFeatureId_fkey" FOREIGN KEY ("deviceFeatureId") REFERENCES "DeviceFeatures"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MaintenanceCards" ADD CONSTRAINT "MaintenanceCards_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "MaintenanceCards" ADD CONSTRAINT "MaintenanceCards_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MaintenanceCards" ADD CONSTRAINT "MaintenanceCards_providerInsId_fkey" FOREIGN KEY ("providerInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MaintenanceCards" ADD CONSTRAINT "MaintenanceCards_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "MaintenanceCards" ADD CONSTRAINT "MaintenanceCards_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MaintenanceCards" ADD CONSTRAINT "MaintenanceCards_customerInsId_fkey" FOREIGN KEY ("customerInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -468,13 +468,13 @@ ALTER TABLE "Operations" ADD CONSTRAINT "Operations_deviceTypeId_fkey" FOREIGN K
 ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_paymentTermId_fkey" FOREIGN KEY ("paymentTermId") REFERENCES "PaymentTermTypes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_creatorInsId_fkey" FOREIGN KEY ("creatorInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_recipientId_fkey" FOREIGN KEY ("recipientId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_recipientId_fkey" FOREIGN KEY ("recipientId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_recipientInsId_fkey" FOREIGN KEY ("recipientInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -486,13 +486,25 @@ ALTER TABLE "OfferSub" ADD CONSTRAINT "OfferSub_offerCardId_fkey" FOREIGN KEY ("
 ALTER TABLE "OfferSub" ADD CONSTRAINT "OfferSub_servideId_fkey" FOREIGN KEY ("servideId") REFERENCES "Services"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OfferRequests" ADD CONSTRAINT "OfferRequests_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OfferRequests" ADD CONSTRAINT "OfferRequests_creatorInsId_fkey" FOREIGN KEY ("creatorInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RequestSub" ADD CONSTRAINT "RequestSub_offerRequestId_fkey" FOREIGN KEY ("offerRequestId") REFERENCES "OfferRequests"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RequestSub" ADD CONSTRAINT "RequestSub_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Services"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_creatorInsId_fkey" FOREIGN KEY ("creatorInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_recipientId_fkey" FOREIGN KEY ("recipientId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_recipientId_fkey" FOREIGN KEY ("recipientId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_recipientInsId_fkey" FOREIGN KEY ("recipientInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -501,25 +513,25 @@ ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_recipientInsId_fkey" F
 ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_typeId_fkey" FOREIGN KEY ("typeId") REFERENCES "NotificationTypes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_deviceId_fkey" FOREIGN KEY ("deviceId") REFERENCES "Devices"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_deviceId_fkey" FOREIGN KEY ("deviceId") REFERENCES "Devices"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_deviceTypeId_fkey" FOREIGN KEY ("deviceTypeId") REFERENCES "DeviceTypes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Notifications" ADD CONSTRAINT "Notifications_deviceTypeId_fkey" FOREIGN KEY ("deviceTypeId") REFERENCES "DeviceTypes"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Appointments" ADD CONSTRAINT "Appointments_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Appointments" ADD CONSTRAINT "Appointments_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Appointments" ADD CONSTRAINT "Appointments_creatorInsId_fkey" FOREIGN KEY ("creatorInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Appointments" ADD CONSTRAINT "Appointments_recipientId_fkey" FOREIGN KEY ("recipientId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Appointments" ADD CONSTRAINT "Appointments_recipientId_fkey" FOREIGN KEY ("recipientId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Appointments" ADD CONSTRAINT "Appointments_recipientInsId_fkey" FOREIGN KEY ("recipientInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Logs" ADD CONSTRAINT "Logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Logs" ADD CONSTRAINT "Logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Logs" ADD CONSTRAINT "Logs_actionId_fkey" FOREIGN KEY ("actionId") REFERENCES "Actions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -528,16 +540,10 @@ ALTER TABLE "Logs" ADD CONSTRAINT "Logs_actionId_fkey" FOREIGN KEY ("actionId") 
 ALTER TABLE "Logs" ADD CONSTRAINT "Logs_tableId_fkey" FOREIGN KEY ("tableId") REFERENCES "Tables"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Announcements" ADD CONSTRAINT "Announcements_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Announcements" ADD CONSTRAINT "Announcements_creatorId_fkey" FOREIGN KEY ("creatorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Announcements" ADD CONSTRAINT "Announcements_creatorInsId_fkey" FOREIGN KEY ("creatorInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Announcements" ADD CONSTRAINT "Announcements_recipientId_fkey" FOREIGN KEY ("recipientId") REFERENCES "Users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Announcements" ADD CONSTRAINT "Announcements_recipientInsId_fkey" FOREIGN KEY ("recipientInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_TeamsToTeamsMembers" ADD CONSTRAINT "_TeamsToTeamsMembers_A_fkey" FOREIGN KEY ("A") REFERENCES "Teams"("id") ON DELETE CASCADE ON UPDATE CASCADE;

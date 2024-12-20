@@ -3,18 +3,18 @@ import CountChart from "./CountChart";
 import prisma from "@/lib/prisma";
 
 const CountChartContainer = async () => {
-  const data1 = await prisma.users.count({
+  const data1 = await prisma.user.count({
     where: {
-      roleId: {
-        in: ["cm4c8rzz1000lakzwdkp23ue4", "cm4c8rzz1000makzwvanl038p"], // roleId'si 4 veya 5 olan kullanıcıları sayısı (1-2 seviye Müşetiriler)
+      role: {
+        in: ["MUSTERI_SEVIYE1", "MUSTERI_SEVIYE2"], // roleId'si 4 veya 5 olan kullanıcıları sayısı (1-2 seviye Müşetiriler)
       },
     },
   });
 
-  const data2 = await prisma.users.count({
+  const data2 = await prisma.user.count({
     where: {
-      roleId: {
-        in: ["cm4c8rzz1000jakzwuyykyw4h", "cm4c8rzz1000kakzwn9j469ab"], // roleId'si 2 veya 3 olan kullanıcıları sayısı (1-2 seviye Servis Sağlayıcılar)
+      role: {
+        in: ["HIZMETSAGLAYICI_SEVIYE1", "HIZMETSAGLAYICI_SEVIYE2"], // roleId'si 2 veya 3 olan kullanıcıları sayısı (1-2 seviye Servis Sağlayıcılar)
       },
     },
   });

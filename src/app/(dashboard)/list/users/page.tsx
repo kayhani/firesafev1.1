@@ -4,13 +4,13 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
-import { Institutions, Prisma, Roles, Users } from "@prisma/client";
+import { Institutions, Prisma, User } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 
 // UserList tipini tanımlama
-type UserList = Users & { institution: Institutions } & { role: Roles };
+type UserList = User & { institution: Institutions };
 
 const columns = [
   {
@@ -65,16 +65,14 @@ const renderRow = (item: UserList) => (
         className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
       />
       <div className="flex flex-col">
-        <h3 className="font-semibold">
-          {item.firstName + " " + item.lastName}
-        </h3>
+        <h3 className="font-semibold">{item.name}</h3>
         <p className="text-xs text-gray-500">
           {item.institution ? item.institution.name : "Kurum Bilgisi Yok"}
         </p>
       </div>
     </td>
     <td className="hidden md:table-cell">
-      {item.role ? item.role.name : "Rol Bilgisi Yok"}
+      {item.role ? item.role : "Rol Bilgisi Yok"}
     </td>
     <td className="hidden md:table-cell">
       {item.registrationDate.toLocaleDateString()}
@@ -107,19 +105,12 @@ const UserListPage = async ({
   const p = page ? parseInt(page) : 1;
 
   // URL Parametreleri için filtreleme oluşturma
-  const query: Prisma.UsersWhereInput = {};
+  const query: Prisma.UserWhereInput = {};
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
       if (value !== undefined) {
         switch (key) {
-          case "roleId":
-            const roleId = value;
-            if (roleId) {
-              query.roleId = roleId;
-            }
-            break;
-
           case "institutionId":
             const institutionId = value; // value'yu tam sayıya çeviriyoruz.
             if (institutionId) {
@@ -137,16 +128,15 @@ const UserListPage = async ({
   }
 
   const [data, count] = await prisma.$transaction([
-    prisma.users.findMany({
+    prisma.user.findMany({
       where: query,
       include: {
         institution: true, // Institutions tablosunun verilerini dahil et
-        role: true, // Roles tablosunun verilerini dahil et
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
     }),
-    prisma.users.count(),
+    prisma.user.count(),
   ]);
 
   return (

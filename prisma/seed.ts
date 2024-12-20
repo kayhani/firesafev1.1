@@ -44,19 +44,6 @@ async function main() {
   })
   console.log('Device types olusturuldu:', devicetypes)
 
-  const roller = await prisma.roles.createMany({
-    data: [
-        {name : "Admin"},
-        {name : "Su"},
-        {name : "User"},
-        {name : "Guest"},
-        {name : "1. Sevıye Servıs Sağlayıcı"},
-        {name : "2. Seviye Servıs Sağlayıcı"},
-        {name : "1. Seviye Müşteri"},
-        {name : "2. Seviye Müşteri"},
-    ]
-  })
-  console.log('Device types olusturuldu:', roller)
 
   const servicess = await prisma.services.createMany({
     data: [
