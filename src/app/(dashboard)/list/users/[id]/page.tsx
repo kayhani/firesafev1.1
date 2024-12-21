@@ -9,12 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-<<<<<<< HEAD
-//Ayhan tarafindan eklendi ilave
-=======
-//Ayhan tarafindan eklendi
 //Fırat tarafından eklendı
->>>>>>> origin/main
 
 const SingleUserPage = async ({
   params: { id },
@@ -76,7 +71,6 @@ const SingleUserPage = async ({
                     }}
                   />
                 )}
-                
               </div>
               <p className="text-sm text-gray-500">
                 <span className="text-gray-600">Kullanıcı Adı: </span>
