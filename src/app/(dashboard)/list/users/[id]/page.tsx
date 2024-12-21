@@ -9,7 +9,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-//Ayhan tarafindan eklendi
 //Fırat tarafından eklendı
 
 const SingleUserPage = async ({
@@ -72,7 +71,6 @@ const SingleUserPage = async ({
                     }}
                   />
                 )}
-                
               </div>
               <p className="text-sm text-gray-500">
                 <span className="text-gray-600">Kullanıcı Adı: </span>
