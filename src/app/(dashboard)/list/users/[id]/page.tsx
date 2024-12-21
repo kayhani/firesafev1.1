@@ -10,6 +10,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 //Ayhan tarafindan eklendi
+//Fırat tarafından eklendı
 
 const SingleUserPage = async ({
   params: { id },
