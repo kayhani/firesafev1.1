@@ -9,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-//Ayhan tarafindan eklendi
+//Ayhan tarafindan eklendi ilave
 
 const SingleUserPage = async ({
   params: { id },
