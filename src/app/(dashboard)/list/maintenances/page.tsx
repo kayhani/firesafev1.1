@@ -9,7 +9,7 @@ import {
   DeviceTypes,
   DeviceFeatures,
   Devices,
-  Users,
+  User,
   Institutions,
   MaintenanceCards,
   Prisma,
@@ -22,9 +22,9 @@ type MaintenanceList = MaintenanceCards & {
   device: Devices;
   deviceType: DeviceTypes;
   deviceFeature: DeviceFeatures;
-  provider: Users;
+  provider: User;
   providerIns: Institutions;
-  customer: Users;
+  customer: User;
   customerIns: Institutions;
   MaintenanceSub: MaintenanceList[];
 };

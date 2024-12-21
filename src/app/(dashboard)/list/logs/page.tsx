@@ -4,12 +4,12 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
-import { Actions, Logs, Prisma, Tables, Users } from "@prisma/client";
+import { Actions, Logs, Prisma, Tables, User } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 
-type Log = Logs & { user: Users } & { action: Actions } & { table: Tables };
+type Log = Logs & { user: User } & { action: Actions } & { table: Tables };
 
 const columns = [
   {

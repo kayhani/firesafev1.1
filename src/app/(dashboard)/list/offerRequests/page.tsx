@@ -7,7 +7,7 @@ import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
     OfferRequests,
-    Users,
+    User,
     Institutions,
     RequestSub,
     Prisma,
@@ -19,7 +19,7 @@ import Link from "next/link";
 type OfferRequestList = OfferRequests & { 
     creatorIns: Institutions 
   } & { 
-    creator: Users 
+    creator: User 
   } & {
     RequestSub: (RequestSub & {
       service: Services  // service ilişkisini de ekliyoruz

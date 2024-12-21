@@ -7,7 +7,7 @@ import prisma from "@/lib/prisma";
 import {
   Institutions,
   Notifications,
-  Users,
+  User,
   DeviceFeatures,
   Devices,
   DeviceTypes,
@@ -25,9 +25,9 @@ const SingleNotificationPage = async ({
   const notificationId = id; // veya Number(id);
   const notification:
     | (Notifications & {
-      creator: Users;
+      creator: User;
       creatorIns: Institutions;
-      recipient: Users;
+      recipient: User;
       recipientIns: Institutions;
       type: NotificationTypes;
       device: Devices | null;  // null olabileceğini belirtiyoruz

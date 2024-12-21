@@ -5,13 +5,13 @@ import TableSearch from "@/components/TableSearch";
 import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { Appointments, Institutions, Users, Prisma } from "@prisma/client";
+import { Appointments, Institutions, User, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 
-type EventList = Appointments & { creator: Users } & {
+type EventList = Appointments & { creator: User } & {
   creatorIns: Institutions;
-} & { recipient: Users } & { recipientIns: Institutions };
+} & { recipient: User } & { recipientIns: Institutions };
 
 const columns = [
   {

@@ -8,7 +8,7 @@ import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
   Institutions,
   Notifications,
-  Users,
+  User,
   NotificationTypes,
   Devices,
   Prisma,
@@ -17,9 +17,9 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 
-type NotificationList = Notifications & { creator: Users } & {
+type NotificationList = Notifications & { creator: User } & {
   creatorIns: Institutions;
-} & { recipient: Users } & { recipientIns: Institutions } & {
+} & { recipient: User } & { recipientIns: Institutions } & {
   type: NotificationTypes;
 } & { device: Devices } & { deviceType: DeviceTypes };
 

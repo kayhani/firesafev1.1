@@ -3,14 +3,14 @@ import BigCalendar from "@/components/BigCalendar";
 import FormModal from "@/components/FormModal";
 import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
-import { OfferRequests, RequestSub, Services, Users, Institutions } from "@prisma/client";
+import { OfferRequests, RequestSub, Services, User, Institutions } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 // İlişkili tipleri tanımlayalım
 type RequestWithSubs = OfferRequests & {
-  creator: Users;
+  creator: User;
   creatorIns: Institutions;
   RequestSub: (RequestSub & {
     service: Services

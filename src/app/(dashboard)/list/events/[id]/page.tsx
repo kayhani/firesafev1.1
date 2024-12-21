@@ -4,7 +4,7 @@ import FormModal from "@/components/FormModal";
 //import Performance from "@/components/Performance";
 import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
-import { Appointments, Institutions, Users } from "@prisma/client";
+import { Appointments, Institutions, User } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -17,9 +17,9 @@ const SingleEventPage = async ({
   const eventId = id; // veya Number(id);
   const event:
     | (Appointments & {
-      creator: Users;
+      creator: User;
       creatorIns: Institutions;
-      recipient: Users;
+      recipient: User;
       recipientIns: Institutions;
     })
     | null = await prisma.appointments.findUnique({

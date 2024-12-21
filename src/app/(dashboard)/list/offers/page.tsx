@@ -8,7 +8,7 @@ import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
   PaymentTermTypes,
   Services,
-  Users,
+  User,
   Institutions,
   OfferCards,
   Prisma,
@@ -19,9 +19,9 @@ import Link from "next/link";
 // Güncellenmiş tip tanımı
 type OfferList = OfferCards & {
   paymentTerm: PaymentTermTypes;
-  creator: Users;
+  creator: User;
   creatorIns: Institutions;
-  recipient: Users;
+  recipient: User;
   recipientIns: Institutions;
   OfferSub: {
     unitPrice: Prisma.Decimal;

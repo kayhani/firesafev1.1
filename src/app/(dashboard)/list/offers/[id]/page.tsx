@@ -6,7 +6,7 @@ import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import {
   Institutions,
-  Users,
+  User,
   OfferCards,
   PaymentTermTypes,
   Services,
@@ -23,9 +23,9 @@ type OfferWithRelations = OfferCards & {
   OfferSub: (OfferSub & {
     service: Services;
   })[];
-  creator: Users;
+  creator: User;
   creatorIns: Institutions;
-  recipient: Users;
+  recipient: User;
   recipientIns: Institutions;
 }
 

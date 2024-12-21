@@ -5,7 +5,7 @@ import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import {
   Institutions,
-  Users,
+  User,
   DeviceFeatures,
   Devices,
   DeviceTypes,
@@ -21,9 +21,9 @@ type MaintenanceType = MaintenanceCards & {
   device: Devices;
   deviceType: DeviceTypes;
   deviceFeature: DeviceFeatures;
-  provider: Users;
+  provider: User;
   providerIns: Institutions;
-  customer: Users;
+  customer: User;
   customerIns: Institutions;
   MaintenanceSub: {
     id: string;
