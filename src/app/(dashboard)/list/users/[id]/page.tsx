@@ -69,6 +69,8 @@ const SingleUserPage = async ({
                   />
                 )}
 
+                //açıklama
+                
               </div>
               <p className="text-sm text-gray-500">
                 <span className="text-gray-600">Kullanıcı Adı: </span>
