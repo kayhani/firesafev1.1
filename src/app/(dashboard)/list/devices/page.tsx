@@ -8,7 +8,7 @@ import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
   DeviceTypes,
   DeviceFeatures,
-  Users,
+  User,
   Institutions,
   IsgMembers,
   Devices,
@@ -19,7 +19,7 @@ import Link from "next/link";
 
 type DeviceList = Devices & { type: DeviceTypes } & {
   feature: DeviceFeatures;
-} & { owner: Users } & { ownerIns: Institutions } & { isgMember: IsgMembers };
+} & { owner: User } & { ownerIns: Institutions } & { isgMember: IsgMembers };
 
 const columns = [
   {

@@ -15,12 +15,12 @@ import {
   OfferCards,
   Devices,
   Prisma,
-  Users,
+  User,
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 
-type InstitutionList = Institutions & { users: Users[] } & {
+type InstitutionList = Institutions & { user: User[] } & {
   devices: Devices[];
 } & { offercards: OfferCards[] } & { teamsMemebers: TeamsMembers[] } & {
   maintenanceCards: MaintenanceCards[];

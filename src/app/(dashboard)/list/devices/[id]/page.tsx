@@ -6,7 +6,7 @@ import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import {
   Institutions,
-  Users,
+  User,
   DeviceFeatures,
   Devices,
   DeviceTypes,
@@ -26,9 +26,9 @@ const SingleDevicePage = async ({
     | (Devices & {
         type: DeviceTypes;
         feature: DeviceFeatures;
-        owner: Users;
+        owner: User;
         ownerIns: Institutions;
-        provider: Users;
+        provider: User;
         providerIns: Institutions;
         isgMember: IsgMembers;
       })
@@ -142,7 +142,7 @@ const SingleDevicePage = async ({
                   <Image src="/person.png" alt="" width={14} height={14} />
                   <span>
                     Sorumlu Personel:{" "}
-                    {device.owner.firstName + " " + device.owner.lastName}
+                    {device.owner.name}
                   </span>
                 </div>
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
@@ -164,7 +164,7 @@ const SingleDevicePage = async ({
                   {/* <Image src="/location.png" alt="" width={14} height={14} /> */}
                   <span>
                     Bakım Sorumlusu:{" "}
-                    {device.provider.firstName + " " + device.provider.lastName}{" "}
+                    {device.provider.name}{" "}
                   </span>
                 </div>
               </div>
