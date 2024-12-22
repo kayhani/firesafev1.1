@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from "bcryptjs";
-import { UserBloodType, UserSex } from "@prisma/client";
+import { UserBloodType, UserSex, UserRole } from "@prisma/client";
 
 export async function PUT(
     request: Request,
@@ -13,7 +13,7 @@ export async function PUT(
         const formData = await request.formData();
 
         // Mevcut kullanıcıyı kontrol et
-        const existingUser = await prisma.users.findUnique({
+        const existingUser = await prisma.user.findUnique({
             where: { id }
         });
 
@@ -34,16 +34,14 @@ export async function PUT(
 
         // Güncellenecek veriler
         const updateData: any = {
-            userName: formData.get('userName') as string,
             email: formData.get('email') as string,
-            firstName: formData.get('firstName') as string || null,
-            lastName: formData.get('lastName') as string || null,
+            name: formData.get('name') as string || null,
             bloodType: formData.get('bloodType') as UserBloodType || null,
             birthday: birthday,
             sex: formData.get('sex') as UserSex || null,
             phone: formData.get('phone') as string || null,
             institutionId: formData.get('institutionId') as string,
-            roleId: formData.get('roleId') as string,
+            role: formData.get('role') as string,
         };
 
         // Şifre varsa ekle
@@ -58,11 +56,10 @@ export async function PUT(
             // updateData.photo = await uploadPhoto(photo);
         }
 
-        const updatedUser = await prisma.users.update({
+        const updatedUser = await prisma.user.update({
             where: { id },
             data: updateData,
             include: {
-                role: true,
                 institution: true
             }
         });
@@ -86,10 +83,9 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
-        const user = await prisma.users.findUnique({
+        const user = await prisma.user.findUnique({
             where: { id: params.id },
             include: {
-                role: true,
                 institution: true,
             }
         });
@@ -110,7 +106,7 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
-        const user = await prisma.users.findUnique({
+        const user = await prisma.user.findUnique({
             where: { id: params.id }
         });
 
@@ -118,7 +114,7 @@ export async function DELETE(
             return new NextResponse("User not found", { status: 404 });
         }
 
-        await prisma.users.delete({
+        await prisma.user.delete({
             where: { id: params.id }
         });
 

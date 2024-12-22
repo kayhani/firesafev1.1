@@ -17,9 +17,7 @@ export async function GET(
                 owner: {
                     select: {
                         id: true,
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 ownerIns: {
@@ -31,9 +29,7 @@ export async function GET(
                 provider: {
                     select: {
                         id: true,
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 providerIns: {
@@ -136,9 +132,7 @@ export async function PUT(
                 owner: {
                     select: {
                         id: true,
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 ownerIns: {
@@ -150,9 +144,7 @@ export async function PUT(
                 provider: {
                     select: {
                         id: true,
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 providerIns: {

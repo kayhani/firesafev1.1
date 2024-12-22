@@ -39,7 +39,7 @@ const SingleOfferRequestPage = async ({
     return notFound();
   }
 
-  const creatorFullName = [request.creator.firstName, request.creator.lastName]
+  const creatorFullName = [request.creator.name]
     .filter(Boolean)
     .join(' ');
 

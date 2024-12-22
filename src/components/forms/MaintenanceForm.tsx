@@ -32,9 +32,7 @@ interface Device {
     };
     owner: {
         id: string;
-        userName: string;
-        firstName: string;
-        lastName: string;
+        name: string;
     };
     ownerIns: {
         id: string;
@@ -42,9 +40,7 @@ interface Device {
     };
     provider: {
         id: string;
-        userName: string;
-        firstName: string;
-        lastName: string;
+        name: string;
     };
     providerIns: {
         id: string;
@@ -251,7 +247,7 @@ const MaintenanceForm = ({ type, data }: { type: "create" | "update"; data?: any
                         <label className="text-xs text-gray-500">Sorumlu Personel</label>
                         <input
                             type="text"
-                            value={deviceData ? `${deviceData.owner.firstName || ''} ${deviceData.owner.lastName || ''}`.trim() || deviceData.owner.userName : ''}
+                            value={deviceData ? deviceData.owner.name : ''}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm bg-gray-50"
                             disabled
                         />
@@ -277,7 +273,7 @@ const MaintenanceForm = ({ type, data }: { type: "create" | "update"; data?: any
                         <label className="text-xs text-gray-500">Bakım Personeli</label>
                         <input
                             type="text"
-                            value={deviceData ? `${deviceData.provider.firstName || ''} ${deviceData.provider.lastName || ''}`.trim() || deviceData.provider.userName : ''}
+                            value={deviceData ? deviceData.provider.name : ''}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm bg-gray-50"
                             disabled
                         />

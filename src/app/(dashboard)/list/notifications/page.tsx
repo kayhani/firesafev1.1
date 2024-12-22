@@ -2,7 +2,6 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role, notificationsData } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
@@ -88,7 +87,7 @@ const renderRow = (item: NotificationList) => (
     <td className="flex items-center gap-4 p-4">
       <div className="flex flex-col">
         <h3 className="font-semibold">
-          {item.creator.firstName + " " + item.creator.lastName}
+          {item.creator.name}
         </h3>
         <p className="text-xs text-gray-500">{item.creatorIns.name}</p>
       </div>
@@ -108,7 +107,7 @@ const renderRow = (item: NotificationList) => (
       /> */}
       <div className="flex flex-col">
         <h3 className="font-semibold">
-          {item.recipient.firstName + " " + item.recipient.lastName}
+          {item.recipient.name}
         </h3>
         <p className="text-xs text-gray-500">{item.recipientIns.name}</p>
       </div>

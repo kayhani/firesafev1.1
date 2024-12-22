@@ -205,7 +205,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
                 <label className="text-xs text-gray-500">Cihaz Sahibi</label>
                 <input
                   type="text"
-                  value={`${ownerInfo.firstName || ''} ${ownerInfo.lastName || ''}`}
+                  value={`${ownerInfo.name}`}
                   className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full bg-gray-50"
                   disabled
                 />

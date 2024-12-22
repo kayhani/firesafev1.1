@@ -2,7 +2,6 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { Actions, Logs, Prisma, Tables, User } from "@prisma/client";
 import Image from "next/image";
@@ -58,7 +57,7 @@ const renderRow = (item: Log) => (
 
     <td className="hidden md:table-cell">{item.date.toLocaleDateString()}</td>
     <td className="hidden md:table-cell">
-      {item.user.firstName + " " + item.user.lastName}
+      {item.user.name}
     </td>
     <td className="hidden md:table-cell">{item.action.name}</td>
     <td className="hidden md:table-cell">{item.table.name}</td>

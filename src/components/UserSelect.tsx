@@ -6,9 +6,7 @@ import toast from 'react-hot-toast';
 // Kullanıcı tipi tanımı
 interface User {
   id: string;
-  userName: string;
-  firstName: string | null;
-  lastName: string | null;
+  name: string;
   email?: string;
   institutionId?: string;
 }
@@ -66,7 +64,7 @@ const UserSelect = ({
         
         // Gelen veriyi kontrol et ve düzenle
         const validUsers = data.filter((user: User) => 
-          user.id && (user.userName || (user.firstName && user.lastName))
+          user.id && (user.name )
         );
 
         setUsers(validUsers);
@@ -144,9 +142,7 @@ const UserSelect = ({
         <option value="">Kullanıcı Seçiniz</option>
         {users.map((user) => (
           <option key={user.id} value={user.id}>
-            {user.firstName && user.lastName 
-              ? `${user.firstName} ${user.lastName}`
-              : user.userName}
+            {user.name }
           </option>
         ))}
       </select>

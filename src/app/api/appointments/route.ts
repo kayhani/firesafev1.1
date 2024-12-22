@@ -36,9 +36,7 @@ export async function GET(request: Request) {
       include: {
         creator: {
           select: {
-            userName: true,
-            firstName: true,
-            lastName: true,
+            name: true,
           },
         },
         creatorIns: {
@@ -48,9 +46,7 @@ export async function GET(request: Request) {
         },
         recipient: {
           select: {
-            userName: true,
-            firstName: true,
-            lastName: true,
+            name: true,
           },
         },
         recipientIns: {

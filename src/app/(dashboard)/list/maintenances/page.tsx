@@ -2,7 +2,6 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role, maintenancesData } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
@@ -79,7 +78,7 @@ const renderRow = (item: MaintenanceList) => (
       <div className="flex flex-col">
         <h3 className="font-semibold">{item.providerIns.name}</h3>
         <p className="text-xs text-gray-500">
-          {item.provider.firstName + " " + item.provider.lastName}
+          {item.provider.name}
         </p>
       </div>
     </td>
@@ -98,7 +97,7 @@ const renderRow = (item: MaintenanceList) => (
       <div className="flex flex-col">
         <h3 className="font-semibold">{item.customerIns.name}</h3>
         <p className="text-xs text-gray-500">
-          {item.customer.firstName + " " + item.customer.lastName}
+          {item.customer.name}
         </p>
       </div>
     </td>

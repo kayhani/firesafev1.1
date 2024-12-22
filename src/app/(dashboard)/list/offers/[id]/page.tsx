@@ -97,7 +97,7 @@ const SingleOfferPage = async ({
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Teklifi Veren Personel:</span>
-                <span className="text-sm text-gray-500">{offer.creator.firstName} {offer.creator.lastName}</span>
+                <span className="text-sm text-gray-500">{offer.creator.name}</span>
               </div>
               <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
@@ -137,7 +137,7 @@ const SingleOfferPage = async ({
               <div>
                 <h1 className="text-md font-semibold">Müşteri</h1>
                 <span className="text-sm text-gray-400">
-                  {offer.recipient.firstName} {offer.recipient.lastName}
+                  {offer.recipient.name}
                 </span>
                 <br />
                 <span className="text-sm text-gray-400">

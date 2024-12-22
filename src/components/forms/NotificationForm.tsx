@@ -247,7 +247,7 @@ const NotificationForm = ({ type, data }: NotificationFormProps) => {
                 <label className="text-xs text-gray-500">Oluşturan Kişi</label>
                 <input
                   type="text"
-                  value={`${creatorInfo.firstName || ''} ${creatorInfo.lastName || ''}`}
+                  value={`${creatorInfo.name || ''}`}
                   className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full bg-gray-50"
                   disabled
                 />

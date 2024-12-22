@@ -71,7 +71,7 @@ const SingleEventPage = async ({
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Randevu Verilen Kişi:</span>
-                <span className="text-sm text-gray-500">{event.recipient.firstName + " " + event.recipient.lastName}</span>
+                <span className="text-sm text-gray-500">{event.recipient.name}</span>
               </div>
               <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
@@ -129,7 +129,7 @@ const SingleEventPage = async ({
                 <span className="text-sm text-gray-400">{event.creator.id}</span>
                 <br></br>
                 <span className="text-sm text-gray-400">
-                  {event.creator.firstName + " " + event.creator.lastName}
+                  {event.creator.name}
                 </span>
                 <br></br>
                 <span className="text-sm text-gray-400">{event.creatorIns.name}</span>

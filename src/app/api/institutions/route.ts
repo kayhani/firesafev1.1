@@ -27,7 +27,7 @@ export async function GET(request: Request) {
         // Kullanıcıya bağlı kurum sorgusu (userId varsa)
         const userInstitution = await prisma.$queryRaw`
             SELECT i.id, i.name, i.address, i.email, i.phone, i."registrationDate"
-            FROM "Users" u
+            FROM "User" u
             JOIN "Institutions" i ON u."institutionId" = i.id
             WHERE u.id = ${userId}
         `;
@@ -90,7 +90,7 @@ export async function DELETE(request: Request) {
         }
 
         // Önce bağlı kayıtları kontrol et
-        const users = await prisma.users.findMany({
+        const users = await prisma.user.findMany({
             where: { institutionId: id }
         });
 

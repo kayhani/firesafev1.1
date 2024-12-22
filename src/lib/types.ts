@@ -31,9 +31,7 @@ export type Device = {
   
   export type User = {
     id: string;
-    userName: string;
-    firstName: string;
-    lastName: string;
+    name: string;
   };
   
   export type Institution = {

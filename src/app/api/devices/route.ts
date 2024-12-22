@@ -22,9 +22,7 @@ export async function GET(request: Request) {
                     owner: {
                         select: {
                             id: true,
-                            userName: true,
-                            firstName: true,
-                            lastName: true,
+                            name:true,
                         }
                     },
                     ownerIns: {
@@ -36,9 +34,7 @@ export async function GET(request: Request) {
                     provider: {
                         select: {
                             id: true,
-                            userName: true,
-                            firstName: true,
-                            lastName: true,
+                            name:true,
                         }
                     },
                     providerIns: {
@@ -77,9 +73,7 @@ export async function GET(request: Request) {
                 owner: {
                     select: {
                         id: true,
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 ownerIns: {
@@ -91,9 +85,7 @@ export async function GET(request: Request) {
                 provider: {
                     select: {
                         id: true,
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 providerIns: {
@@ -257,9 +249,7 @@ export async function POST(req: Request) {
                owner: {
                    select: {
                        id: true,
-                       userName: true,
-                       firstName: true,
-                       lastName: true,
+                       name:true,
                    }
                },
                ownerIns: {
@@ -271,9 +261,7 @@ export async function POST(req: Request) {
                provider: {
                    select: {
                        id: true,
-                       userName: true,
-                       firstName: true,
-                       lastName: true,
+                       name:true,
                    }
                },
                providerIns: {

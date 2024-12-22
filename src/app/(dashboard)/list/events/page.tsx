@@ -1,13 +1,15 @@
+import { auth } from "@/auth";
 import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Appointments, Institutions, User, Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+
+
 
 type EventList = Appointments & { creator: User } & {
   creatorIns: Institutions;
@@ -68,7 +70,7 @@ const renderRow = (item: EventList) => (
       /> */}
       <div className="flex flex-col">
         <h3 className="font-semibold">
-          {item.creator.firstName + " " + item.creator.lastName}
+          {item.creator.name}
         </h3>
         <p className="text-xs text-gray-500">{item.creatorIns.name}</p>
         {/* <p className="text-xs text-gray-500">{item.creatorOrganization}</p> creatorId ile ilişkili creatorOrganization gelecek */}
@@ -88,7 +90,7 @@ const renderRow = (item: EventList) => (
       /> */}
       <div className="flex flex-col">
         <h3 className="font-semibold">
-          {item.recipient.firstName + " " + item.recipient.lastName}
+          {item.recipient.name}
         </h3>
         <p className="text-xs text-gray-500">{item.recipientIns.name}</p>
       </div>
@@ -105,7 +107,7 @@ const renderRow = (item: EventList) => (
             <Image src="/view.png" alt="" width={24} height={24} />
           </button>
         </Link>
-        {role === "admin" && (
+        {session.user.role === "ADMIN" && (
           // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
           //   <Image src="/delete.png" alt="" width={16} height={16} />
           // </button>
@@ -122,6 +124,8 @@ const EventListPage = async ({
   searchParams: { [key: string]: string | undefined };
 }) => {
   const { page, ...queryParams } = searchParams;
+
+
 
   const p = page ? parseInt(page) : 1;
 
@@ -176,6 +180,8 @@ const EventListPage = async ({
     prisma.appointments.count(),
   ]);
 
+  const session = await auth();
+
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* TOP */}
@@ -193,7 +199,7 @@ const EventListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && (
+            {session.user.role === "ADMIN" && (
               // <button className="w-8 h-8 flex items-center justify-center rounded-full bg-firelightorange">
               //     <Image src="/plus.png" alt="" width={14} height={14}/>
               // </button>

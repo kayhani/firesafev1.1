@@ -51,16 +51,12 @@ export async function POST(req: Request) {
                 deviceType: true,
                 creator: {
                     select: {
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 recipient: {
                     select: {
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 type: true
@@ -107,16 +103,12 @@ export async function GET(request: Request) {
                 deviceType: true,
                 creator: {
                     select: {
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 recipient: {
                     select: {
-                        userName: true,
-                        firstName: true,
-                        lastName: true,
+                        name:true,
                     }
                 },
                 type: true
@@ -169,16 +161,12 @@ export async function DELETE(request: Request) {
                 deviceType: true,
                 creator: {
                     select: {
-                        userName: true,
-                        firstName: true,
-                        lastName: true
+                        name:true,
                     }
                 },
                 recipient: {
                     select: {
-                        userName: true,
-                        firstName: true,
-                        lastName: true
+                        name:true,
                     }
                 },
                 type: true

@@ -93,7 +93,7 @@ const SingleNotificationPage = async ({
 
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
                   <span className="text-gray-600">Bildirim Verilen Kişi:</span>
-                  <span>{notification.recipient.firstName + " " + notification.recipient.lastName}</span>
+                  <span>{notification.recipient.name}</span>
                 </div>
 
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">

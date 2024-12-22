@@ -13,14 +13,11 @@ interface Props {
 
 interface AppointmentWithRelations extends Appointments {
   creator?: {
-    userName: string;
-    firstName: string;
-    lastName: string;
+    name: string;
+    
   };
   recipient?: {
-    userName: string;
-    firstName: string;
-    lastName: string;
+    name: string;
   };
   creatorIns?: {
     name: string;
@@ -37,14 +34,10 @@ interface CalendarEvent {
   end: Date;
   description: string;
   creator?: {
-    userName: string;
-    firstName: string;
-    lastName: string;
+    name: string;
   };
   recipient?: {
-    userName: string;
-    firstName: string;
-    lastName: string;
+    name: string;
   };
 }
 
@@ -81,10 +74,10 @@ const BigCalendar = ({ userId, institutionId }: Props) => {
         
         const formattedEvents = appointments.map((appointment): CalendarEvent => ({
           id: appointment.id,
-          title: `${appointment.tittle} - ${appointment.creator?.firstName || 'Kullanıcı'} ile ${appointment.recipient?.firstName || 'Kullanıcı'}`,
+          title: `${appointment.tittle} - ${appointment.creator?.name || 'Kullanıcı'} ile ${appointment.recipient?.name || 'Kullanıcı'}`,
           start: new Date(appointment.start),
           end: new Date(appointment.end),
-          description: `${appointment.content}\n\nOluşturan: ${appointment.creator?.firstName} ${appointment.creator?.lastName}\nKatılımcı: ${appointment.recipient?.firstName} ${appointment.recipient?.lastName}\nKurum: ${appointment.creatorIns?.name}`,
+          description: `${appointment.content}\n\nOluşturan: ${appointment.creator?.name} \nKatılımcı: ${appointment.recipient?.name} \nKurum: ${appointment.creatorIns?.name}`,
           creator: appointment.creator,
           recipient: appointment.recipient
         }));

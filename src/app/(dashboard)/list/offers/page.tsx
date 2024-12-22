@@ -84,7 +84,7 @@ const renderRow = (item: OfferList) => (
       <div className="flex flex-col">
         <h3 className="font-semibold">{item.creatorIns.name}</h3>
         <p className="text-xs text-gray-500">
-          {item.creator.firstName + " " + item.creator.lastName}
+          {item.creator.name}
         </p>
       </div>
     </td>
@@ -96,7 +96,7 @@ const renderRow = (item: OfferList) => (
       <div className="flex flex-col">
         <h3 className="font-semibold">{item.recipientIns.name}</h3>
         <p className="text-xs text-gray-500">
-          {item.recipient.firstName + " " + item.recipient.lastName}
+          {item.recipient.name}
         </p>
       </div>
     </td>

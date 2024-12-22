@@ -10,15 +10,13 @@ export async function GET(
   try {
     const institutionId = params.id;
     
-    const users = await prisma.users.findMany({
+    const users = await prisma.user.findMany({
       where: {
         institutionId: institutionId,
       },
       select: {
         id: true,
-        userName: true,
-        firstName: true,
-        lastName: true,
+        name:true,
         email: true,
         institutionId: true,
       },

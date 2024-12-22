@@ -2,7 +2,6 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role, devicesData } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
@@ -80,7 +79,7 @@ const renderRow = (item: DeviceList) => (
         <h3 className="font-semibold">{item.type.name}</h3>
         <p className="text-xs text-gray-500">{item.ownerIns.name}</p>
         <p className="text-xs text-gray-500">
-          {item.owner.firstName + " " + item.owner.lastName}
+          {item.owner.name}
         </p>
         {/* <td className="hidden md:table-cell">{item.address}</td> */}
       </div>
@@ -90,7 +89,7 @@ const renderRow = (item: DeviceList) => (
 
     {/* <div className="flex flex-col">
       <td className="hidden md:table-cell">{item.institution.name}</td>
-      <td className="hidden md:table-cell">{item.provider.firstName + " " + item.provider.lastName}</td>
+      <td className="hidden md:table-cell">{item.provider.name}</td>
 
     </div> */}
 

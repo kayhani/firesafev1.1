@@ -99,9 +99,7 @@ const SingleMaintenancePage = async ({
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
                   <span>
                     Cihaz Sorumlusu:{" "}
-                    {maintenance.customer.firstName +
-                      " " +
-                      maintenance.customer.lastName}
+                    {maintenance.customer.name}
                   </span>
                 </div>
 
@@ -137,9 +135,7 @@ const SingleMaintenancePage = async ({
               <div className="">
                 <h1 className="text-md font-semibold">Hizmet Veren Firma</h1>
                 <span className="text-sm text-gray-400">
-                  {maintenance.provider.firstName +
-                    " " +
-                    maintenance.provider.lastName}
+                  {maintenance.provider.name}
                 </span>
                 <br></br>
                 <span className="text-sm text-gray-400">

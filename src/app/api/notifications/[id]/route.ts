@@ -17,9 +17,7 @@ export async function GET(
         deviceType: true,
         creator: {
           select: {
-            userName: true,
-            firstName: true,
-            lastName: true,
+            name:true,
             institutionId: true,
           },
         },
@@ -30,9 +28,7 @@ export async function GET(
         },
         recipient: {
           select: {
-            userName: true,
-            firstName: true,
-            lastName: true,
+            name:true,
           },
         },
         recipientIns: {
@@ -113,16 +109,12 @@ export async function PUT(
         deviceType: true,
         creator: {
           select: {
-            userName: true,
-            firstName: true,
-            lastName: true,
+            name:true,
           }
         },
         recipient: {
           select: {
-            userName: true,
-            firstName: true,
-            lastName: true,
+            name:true,
           }
         },
         type: true
@@ -160,16 +152,12 @@ export async function DELETE(
         deviceType: true,
         creator: {
           select: {
-            userName: true,
-            firstName: true,
-            lastName: true
+            name:true,
           }
         },
         recipient: {
           select: {
-            userName: true,
-            firstName: true,
-            lastName: true
+            name:true,
           }
         },
         type: true

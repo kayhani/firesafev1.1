@@ -2,7 +2,7 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { UserBloodType, UserSex } from "@prisma/client";
+import { UserBloodType, UserSex, UserRole } from "@prisma/client";
 
 export async function POST(req: Request) {
     try {
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
 
         const bloodTypeValue = formData.get('bloodType') as string;
         const sexValue = formData.get('sex') as string;
+        const roleValue = formData.get('role') as string;
 
         console.log("Creating user with data:", {
             userName: formData.get('userName'),
@@ -42,20 +43,18 @@ export async function POST(req: Request) {
             roleId: formData.get('roleId'),
         });
 
-        const user = await prisma.users.create({
+        const user = await prisma.user.create({
             data: {
-                userName: formData.get('userName') as string,
                 email: formData.get('email') as string,
                 password: hashedPassword,
-                firstName: formData.get('firstName') as string || null,
-                lastName: formData.get('lastName') as string || null,
+                name: formData.get('name') as string || null,
                 bloodType: bloodTypeValue ? bloodTypeValue as UserBloodType : null,
                 birthday: birthday,
                 sex: sexValue ? sexValue as UserSex : null,
                 phone: formData.get('phone') as string || null,
                 photo: photoUrl || null,
                 institutionId: formData.get('institutionId') as string,
-                roleId: formData.get('roleId') as string,
+                role: roleValue ? roleValue as UserRole : 'GUEST',
             },
         });
 
@@ -83,7 +82,7 @@ export async function DELETE(request: Request) {
         }
 
         // İlişkili kayıtları kontrol et
-        const user = await prisma.users.findUnique({
+        const user = await prisma.user.findUnique({
             where: { id },
             include: {
                 CreatorOfferCards: true,
@@ -141,7 +140,7 @@ export async function DELETE(request: Request) {
         }
 
         // İlişkili kayıt yoksa kullanıcıyı sil
-        await prisma.users.delete({
+        await prisma.user.delete({
             where: { id }
         });
 
