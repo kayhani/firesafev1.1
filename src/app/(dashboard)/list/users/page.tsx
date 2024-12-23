@@ -3,12 +3,12 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
-import { Institutions, Prisma, User } from "@prisma/client";
+import { auth } from "@/auth";
+import { Institutions, Prisma, User, UserRole } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 
-// UserList tipini tanımlama
 type UserList = User & { institution: Institutions };
 
 const columns = [
@@ -48,62 +48,69 @@ const columns = [
   },
 ];
 
-// Satır render etme fonksiyonu
-const renderRow = (item: UserList) => (
-  <tr
-    key={item.id}
-    className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-  >
-    <td className="hidden md:table-cell">{item.id}</td>
-    <td className="flex items-center gap-4 p-4">
-      <Image
-        src={item.photo || "/noAvatar.png"}
-        alt=""
-        width={40}
-        height={40}
-        className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
-      />
-      <div className="flex flex-col">
-        <h3 className="font-semibold">{item.name}</h3>
-        <p className="text-xs text-gray-500">
-          {item.institution ? item.institution.name : "Kurum Bilgisi Yok"}
-        </p>
-      </div>
-    </td>
-    <td className="hidden md:table-cell">
-      {item.role ? item.role : "Rol Bilgisi Yok"}
-    </td>
-    <td className="hidden md:table-cell">
-      {item.registrationDate.toLocaleDateString()}
-    </td>
-    <td className="hidden md:table-cell">{item.phone}</td>
-    <td className="hidden md:table-cell">{item.email}</td>
-    <td>
-      <div className="flex items-center gap-2">
-        <Link href={`/list/users/${item.id}`}>
-          <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
-            <Image src="/view.png" alt="" width={24} height={24} />
-          </button>
-        </Link>
-        {role === "admin" && (
-          <FormModal table="user" type="delete" id={item.id} />
-        )}
-      </div>
-    </td>
-  </tr>
-);
+const isAuthorized = (userRole: UserRole) => {
+  const authorizedRoles: Array<UserRole> = [
+    UserRole.ADMIN,
+    UserRole.HIZMETSAGLAYICI_SEVIYE2
+  ];
+  return authorizedRoles.includes(userRole);
+};
 
-// Kullanıcı Listesi Sayfası
 const UserListPage = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const { page, ...queryParams } = searchParams;
+  const session = await auth();
+  const currentUserRole = session?.user?.role as UserRole;
 
+  const renderRow = (item: UserList) => (
+    <tr
+      key={item.id}
+      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+    >
+      <td className="hidden md:table-cell">{item.id}</td>
+      <td className="flex items-center gap-4 p-4">
+        <Image
+          src={item.photo || "/noAvatar.png"}
+          alt=""
+          width={40}
+          height={40}
+          className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
+        />
+        <div className="flex flex-col">
+          <h3 className="font-semibold">{item.name}</h3>
+          <p className="text-xs text-gray-500">
+            {item.institution ? item.institution.name : "Kurum Bilgisi Yok"}
+          </p>
+        </div>
+      </td>
+      <td className="hidden md:table-cell">
+        {item.role ? item.role : "Rol Bilgisi Yok"}
+      </td>
+      <td className="hidden md:table-cell">
+        {item.registrationDate.toLocaleDateString()}
+      </td>
+      <td className="hidden md:table-cell">{item.phone}</td>
+      <td className="hidden md:table-cell">{item.email}</td>
+      <td>
+        <div className="flex items-center gap-2">
+          <Link href={`/list/users/${item.id}`}>
+            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
+              <Image src="/view.png" alt="" width={24} height={24} />
+            </button>
+          </Link>
+          {isAuthorized(currentUserRole) && (
+            <FormModal table="user" type="delete" id={item.id} />
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+
+  const { page, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
 
-  // URL Parametreleri için filtreleme oluşturma
   const query: Prisma.UserWhereInput = {};
 
   if (queryParams) {
@@ -111,10 +118,8 @@ const UserListPage = async ({
       if (value !== undefined) {
         switch (key) {
           case "institutionId":
-            const institutionId = value; // value'yu tam sayıya çeviriyoruz.
+            const institutionId = value;
             if (institutionId) {
-              // geçerli bir sayı olup olmadığını kontrol ediyoruz.
-              // Users tablosundaki roleId'ye göre filtreleme yapıyoruz.
               query.institutionId = institutionId;
             }
             break;
@@ -130,7 +135,7 @@ const UserListPage = async ({
     prisma.user.findMany({
       where: query,
       include: {
-        institution: true, // Institutions tablosunun verilerini dahil et
+        institution: true,
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
@@ -140,7 +145,6 @@ const UserListPage = async ({
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* Üst Kısım */}
       <div className="flex item-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">
           Tüm Kullanıcılar
@@ -154,17 +158,17 @@ const UserListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal table="user" type="create" />}
+            {isAuthorized(currentUserRole) && (
+              <FormModal table="user" type="create" />
+            )}
           </div>
         </div>
       </div>
 
-      {/* Kullanıcı Listesi */}
       <div className="">
         <Table columns={columns} renderRow={renderRow} data={data} />
       </div>
 
-      {/* Sayfalama */}
       <Pagination page={p} count={count} />
     </div>
   );

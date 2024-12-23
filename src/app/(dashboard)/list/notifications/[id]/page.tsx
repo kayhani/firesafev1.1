@@ -2,8 +2,9 @@ import Announcements from "@/components/Announcements";
 import BigCalendar from "@/components/BigCalendar";
 import FormModal from "@/components/FormModal";
 //import Performance from "@/components/Performance";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
+import { auth } from "@/auth";
+
 import {
   Institutions,
   Notifications,
@@ -12,16 +13,27 @@ import {
   Devices,
   DeviceTypes,
   NotificationTypes,
+  UserRole,
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+const isAuthorized = (userRole: UserRole) => {
+  const authorizedRoles: Array<UserRole> = [
+    UserRole.ADMIN,
+    UserRole.HIZMETSAGLAYICI_SEVIYE2
+  ];
+  return authorizedRoles.includes(userRole);
+};
 
 const SingleNotificationPage = async ({
   params: { id },
 }: {
   params: { id: string };
 }) => {
+  const session = await auth();
+  const currentUserRole = session?.user?.role as UserRole;
   const notificationId = id; // veya Number(id);
   const notification:
     | (Notifications & {
@@ -61,7 +73,7 @@ const SingleNotificationPage = async ({
             <div className="w-full flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">Bildirim Kartı</h1>
-                {role === "admin" && (
+                {isAuthorized(currentUserRole) && (
                   <FormModal
                     table="notification"
                     type="update"

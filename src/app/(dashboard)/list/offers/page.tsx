@@ -2,7 +2,7 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role } from "@/lib/data";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
@@ -12,11 +12,11 @@ import {
   Institutions,
   OfferCards,
   Prisma,
+  UserRole,
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 
-// Güncellenmiş tip tanımı
 type OfferList = OfferCards & {
   paymentTerm: PaymentTermTypes;
   creator: User;
@@ -29,7 +29,6 @@ type OfferList = OfferCards & {
   }[];
 };
 
-// Toplam tutarı hesaplayan yardımcı fonksiyon
 const calculateTotalAmount = (offerSubs: { unitPrice: Prisma.Decimal; size: Prisma.Decimal }[]) => {
   return offerSubs.reduce((total, sub) => {
     const subTotal = parseFloat(sub.unitPrice.toString()) * parseFloat(sub.size.toString());
@@ -74,61 +73,70 @@ const columns = [
   },
 ];
 
-const renderRow = (item: OfferList) => (
-  <tr
-    key={item.id}
-    className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
-  >
-    <td className="hidden md:table-cell">{item.id}</td>
-    <td className="flex items-center gap-4 p-4">
-      <div className="flex flex-col">
-        <h3 className="font-semibold">{item.creatorIns.name}</h3>
-        <p className="text-xs text-gray-500">
-          {item.creator.name}
-        </p>
-      </div>
-    </td>
-
-    <td className="hidden md:table-cell">
-      {item.offerDate.toLocaleDateString()}
-    </td>
-    <td className="flex items-center gap-4 p-4">
-      <div className="flex flex-col">
-        <h3 className="font-semibold">{item.recipientIns.name}</h3>
-        <p className="text-xs text-gray-500">
-          {item.recipient.name}
-        </p>
-      </div>
-    </td>
-    <td className="hidden md:table-cell">
-      {calculateTotalAmount(item.OfferSub).toLocaleString("tr-TR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}
-    </td>
-    <td className="hidden md:table-cell">{item.status}</td>
-    <td>
-      <div className="flex items-center gap-2">
-        <Link href={`/list/offers/${item.id}`}>
-          <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
-            <Image src="/view.png" alt="" width={24} height={24} />
-          </button>
-        </Link>
-        {role === "admin" && (
-          <FormModal table="offer" type="delete" id={item.id} />
-        )}
-      </div>
-    </td>
-  </tr>
-);
+const isAuthorized = (userRole: UserRole) => {
+  const authorizedRoles: Array<UserRole> = [
+    UserRole.ADMIN,
+    UserRole.HIZMETSAGLAYICI_SEVIYE2
+  ];
+  return authorizedRoles.includes(userRole);
+};
 
 const OfferListPage = async ({
   searchParams,
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-  const { page, ...queryParams } = searchParams;
+  const session = await auth();
+  const currentUserRole = session?.user?.role as UserRole;
 
+  const renderRow = (item: OfferList) => (
+    <tr
+      key={item.id}
+      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
+    >
+      <td className="hidden md:table-cell">{item.id}</td>
+      <td className="flex items-center gap-4 p-4">
+        <div className="flex flex-col">
+          <h3 className="font-semibold">{item.creatorIns.name}</h3>
+          <p className="text-xs text-gray-500">
+            {item.creator.name}
+          </p>
+        </div>
+      </td>
+      <td className="hidden md:table-cell">
+        {item.offerDate.toLocaleDateString()}
+      </td>
+      <td className="flex items-center gap-4 p-4">
+        <div className="flex flex-col">
+          <h3 className="font-semibold">{item.recipientIns.name}</h3>
+          <p className="text-xs text-gray-500">
+            {item.recipient.name}
+          </p>
+        </div>
+      </td>
+      <td className="hidden md:table-cell">
+        {calculateTotalAmount(item.OfferSub).toLocaleString("tr-TR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
+      </td>
+      <td className="hidden md:table-cell">{item.status}</td>
+      <td>
+        <div className="flex items-center gap-2">
+          <Link href={`/list/offers/${item.id}`}>
+            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
+              <Image src="/view.png" alt="" width={24} height={24} />
+            </button>
+          </Link>
+          {isAuthorized(currentUserRole) && (
+            <FormModal table="offer" type="delete" id={item.id} />
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+
+  const { page, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
 
   const query: Prisma.OfferCardsWhereInput = {};
@@ -178,7 +186,7 @@ const OfferListPage = async ({
         creatorIns: true,
         recipient: true,
         recipientIns: true,
-        OfferSub: true,  // OfferSub'ı include ediyoruz
+        OfferSub: true,
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
@@ -188,7 +196,6 @@ const OfferListPage = async ({
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
       <div className="flex item-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">Tüm Teklifler</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
@@ -200,19 +207,14 @@ const OfferListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {/* {role === "admin" && (
-              <FormModal table="offer" type="create" />
-            )} */}
           </div>
         </div>
       </div>
 
-      {/* LIST */}
       <div className="">
         <Table columns={columns} renderRow={renderRow} data={data} />
       </div>
 
-      {/* PAGINATION */}
       <Pagination page={p} count={count} />
     </div>
   );

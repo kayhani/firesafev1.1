@@ -70,7 +70,7 @@ export async function GET() {
           recipient: true,
           recipientIns: true,
           paymentTerm: true,
-          OfferSub: {    // offerSub yerine OfferSub kullanıyoruz
+          OfferSub: {    
             include: {
               service: true
             }

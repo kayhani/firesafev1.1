@@ -1,20 +1,35 @@
 import Announcements from "@/components/Announcements";
 import BigCalendar from "@/components/BigCalendar";
 import FormModal from "@/components/FormModal";
-//import Performance from "@/components/Performance";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
-import { Appointments, Institutions, User } from "@prisma/client";
+import { auth } from "@/auth";
+import { 
+  Appointments, 
+  Institutions, 
+  User,
+  UserRole 
+} from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+const isAuthorized = (userRole: UserRole) => {
+  const authorizedRoles: Array<UserRole> = [
+    UserRole.ADMIN,
+    UserRole.HIZMETSAGLAYICI_SEVIYE2
+  ];
+  return authorizedRoles.includes(userRole);
+};
 
 const SingleEventPage = async ({
   params: { id },
 }: {
   params: { id: string };
 }) => {
-  const eventId = id; // veya Number(id);
+  const session = await auth();
+  const currentUserRole = session?.user?.role as UserRole;
+
+  const eventId = id;
   const event:
     | (Appointments & {
       creator: User;
@@ -35,19 +50,16 @@ const SingleEventPage = async ({
   if (!event) {
     return notFound();
   }
+
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
-      {/* LEFT */}
       <div className="w-full xl:w-2/3">
-        {/* TOP */}
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* USER INFO CARD */}
-          {/* USER INFO CARD */}
           <div className="bg-lamaPurpleLight py-6 px-4 rounded-md flex-1 flex gap-4">
             <div className="w-full flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">Randevu Kartı</h1>
-                {role === "admin" && (
+                {isAuthorized(currentUserRole) && (
                   <FormModal
                     table="event"
                     type="update"
@@ -113,9 +125,7 @@ const SingleEventPage = async ({
               </div>
             </div>
           </div>
-          {/* SMALL CARDS */}
           <div className="flex-1 flex gap-4 justify-between flex-wrap">
-            {/* CARD */}
             <div className="bg-lamaSky p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[100%]">
               <Image
                 src="/smc-customer.png"
@@ -128,14 +138,11 @@ const SingleEventPage = async ({
                 <h1 className="text-md font-semibold">Oluşturan Personel</h1>
                 <span className="text-sm text-gray-400">{event.creator.id}</span>
                 <br></br>
-                <span className="text-sm text-gray-400">
-                  {event.creator.name}
-                </span>
+                <span className="text-sm text-gray-400">{event.creator.name}</span>
                 <br></br>
                 <span className="text-sm text-gray-400">{event.creatorIns.name}</span>
               </div>
             </div>
-            {/* CARD */}
             <div className="bg-lamaYellow p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[100%]">
               <Image
                 src="/smc-calendar.png"
@@ -151,7 +158,6 @@ const SingleEventPage = async ({
                 </span>
               </div>
             </div>
-            {/* CARD */}
             <div className="bg-lamaSky p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[100%]">
               <Image
                 src="/smc-calendar.png"
@@ -167,7 +173,6 @@ const SingleEventPage = async ({
                 </span>
               </div>
             </div>
-            {/* CARD */}
             <div className="bg-lamaYellow p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[100%]">
               <Image
                 src="/smc-calendar.png"

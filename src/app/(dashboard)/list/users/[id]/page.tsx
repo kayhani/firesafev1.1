@@ -1,22 +1,30 @@
 import Announcements from "@/components/Announcements";
 import BigCalendar from "@/components/BigCalendar";
 import FormModal from "@/components/FormModal";
-//import Performance from "@/components/Performance";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
-import { Institutions, User } from "@prisma/client";
+import { auth } from "@/auth";
+import { Institutions, User, UserRole } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-//Fırat tarafından eklendı
+const isAuthorized = (userRole: UserRole) => {
+  const authorizedRoles: Array<UserRole> = [
+    UserRole.ADMIN,
+    UserRole.HIZMETSAGLAYICI_SEVIYE2
+  ];
+  return authorizedRoles.includes(userRole);
+};
 
 const SingleUserPage = async ({
   params: { id },
 }: {
   params: { id: string };
 }) => {
-  const userId = id; // veya Number(id);
+  const session = await auth();
+  const currentUserRole = session?.user?.role as UserRole;
+
+  const userId = id;
   const user: (User & { institution: Institutions | null }) | null =
     await prisma.user.findUnique({
       where: { id: id },
@@ -49,8 +57,7 @@ const SingleUserPage = async ({
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">{user.name}</h1>
-
-                {role === "admin" && (
+                {isAuthorized(currentUserRole) && (
                   <FormModal
                     table="user"
                     type="update"
@@ -61,13 +68,12 @@ const SingleUserPage = async ({
                       bloodType: user.bloodType,
                       birthday: user.birthday
                         ? user.birthday.toISOString().split("T")[0]
-                        : null, // date input için YYYY-MM-DD formatı
+                        : null,
                       sex: user.sex,
                       phone: user.phone,
                       photo: user.photo,
                       institutionId: user.institutionId,
                       role: user.role,
-                      // password alanını göndermiyoruz çünkü güvenlik açısından uygun değil
                     }}
                   />
                 )}
@@ -171,35 +177,22 @@ const SingleUserPage = async ({
         <div className="bg-white p-4 rounded-md">
           <h1 className="text-xl font-semibold">Kısayollar</h1>
           <div className="mt-4 flex gap-4 flex-wrap text-xs text-black-500">
-            {user.role === "ADMIN" ? (
+            {user.role === UserRole.ADMIN ? (
               <>
-                <Link
-                  className="p-3 rounded-md bg-lamaSkyLight"
-                  href="/list/offers"
-                >
+                <Link className="p-3 rounded-md bg-lamaSkyLight" href="/list/offers">
                   Tüm Teklifler
                 </Link>
-                <Link
-                  className="p-3 rounded-md bg-lamaPurple"
-                  href="/list/maintenances"
-                >
+                <Link className="p-3 rounded-md bg-lamaPurple" href="/list/maintenances">
                   Tüm Bakımlar
                 </Link>
-                <Link
-                  className="p-3 rounded-md bg-lamaPurpleLight"
-                  href="/list/devices"
-                >
+                <Link className="p-3 rounded-md bg-lamaPurpleLight" href="/list/devices">
                   Tüm Cihazlar
                 </Link>
-                <Link
-                  className="p-3 rounded-md bg-lamaYellowLight"
-                  href="/list/notifications"
-                >
+                <Link className="p-3 rounded-md bg-lamaYellowLight" href="/list/notifications">
                   Tüm Bildirimler
                 </Link>
               </>
-            ) : user.role === "MUSTERI_SEVIYE1" ||
-              user.role === "MUSTERI_SEVIYE2" ? (
+            ) : user.role === UserRole.MUSTERI_SEVIYE1 || user.role === UserRole.MUSTERI_SEVIYE2 ? (
               <>
                 <Link
                   className="p-3 rounded-md bg-lamaSkyLight"
@@ -226,8 +219,7 @@ const SingleUserPage = async ({
                   Kullanıcı&apos;nın Bildirimleri
                 </Link>
               </>
-            ) : user.role === "HIZMETSAGLAYICI_SEVIYE1" ||
-              user.role === "HIZMETSAGLAYICI_SEVIYE2" ? (
+            ) : user.role === UserRole.HIZMETSAGLAYICI_SEVIYE1 || user.role === UserRole.HIZMETSAGLAYICI_SEVIYE2 ? (
               <>
                 <Link
                   className="p-3 rounded-md bg-lamaSkyLight"
@@ -257,7 +249,6 @@ const SingleUserPage = async ({
             ) : null}
           </div>
         </div>
-        {/* <Performance /> */}
         <Announcements />
       </div>
     </div>

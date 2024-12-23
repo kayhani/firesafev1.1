@@ -1,7 +1,20 @@
-import { role } from "@/lib/data";
+import { auth } from "@/auth";
+import { UserRole } from "@prisma/client";
 import Link from "next/link";
 import Image from "next/image";
 
+// Role mapping yardımcı fonksiyonu
+const mapRolesToUserRoles = (roles: string[]): UserRole[] => {
+  const roleMap: { [key: string]: UserRole } = {
+    'admin': UserRole.ADMIN,
+    'provider': UserRole.HIZMETSAGLAYICI_SEVIYE2,
+    'lowprovider': UserRole.HIZMETSAGLAYICI_SEVIYE1,
+    'customer': UserRole.MUSTERI_SEVIYE2,
+    'lowcustomer': UserRole.MUSTERI_SEVIYE1
+  };
+  
+  return roles.map(role => roleMap[role]).filter(role => role !== undefined);
+};
 
 const menuItems = [
   {
@@ -17,35 +30,26 @@ const menuItems = [
         icon: "/user.png",
         label: "Kullanıcılar",
         href: "/list/users",
-        visible: ["admin","provider", "customer", "lowcustomer", "lowprovider"],
+        visible: ["admin", "provider", "customer", "lowcustomer", "lowprovider"],
       },
-
       {
         icon: "/user.png",
         label: "Şirketler",
         href: "/list/institutions",
-        visible: ["admin","provider", "customer", "lowcustomer", "lowprovider"],
+        visible: ["admin", "provider", "customer", "lowcustomer", "lowprovider"],
       },
-
-
-
-      
       {
         icon: "/fire-extinguisher.png",
         label: "Yangın Güvenlik Önlemleri",
         href: "/list/devices",
         visible: ["admin", "provider", "customer", "lowcustomer", "lowprovider"],
       },
-
-
       {
         icon: "/offer.png",
         label: "Teklif Talepleri",
         href: "/list/offerRequests",
         visible: ["admin", "provider", "customer"],
       },
-
-
       {
         icon: "/offer.png",
         label: "Teklifler",
@@ -70,16 +74,12 @@ const menuItems = [
         href: "/list/notifications",
         visible: ["admin", "provider", "customer", "lowcustomer", "lowprovider"],
       },
-
       {
         icon: "/report.png",
         label: "Raporlama",
         href: "/list/classes",
         visible: ["admin", "provider", "customer", "lowcustomer", "lowprovider"],
       },
-      
-
-      
     ],
   },
   {
@@ -119,7 +119,30 @@ const menuItems = [
   },
 ];
 
-const Menu = () => {
+const Menu = async () => {
+  const session = await auth();
+  const currentUserRole = session?.user?.role as UserRole;
+
+  console.log("Current user role:", currentUserRole);
+
+
+  // Rol kontrolü için yardımcı fonksiyon
+  const isVisible = (allowedRoles: string[]) => {
+    const mappedRoles = mapRolesToUserRoles(allowedRoles);
+
+    console.log("Mapped roles:", mappedRoles);
+    console.log("Is visible:", mappedRoles.includes(currentUserRole));
+
+    return mappedRoles.includes(currentUserRole);
+  };
+
+  // Session kontrolü ekleyelim
+  if (!session || !currentUserRole) {
+    console.log("No session or role found");
+    return null;
+  }
+
+
   return (
     <div className="mt-4 text-sm">
       {menuItems.map((i) => (
@@ -128,7 +151,12 @@ const Menu = () => {
             {i.title}
           </span>
           {i.items.map((item) => {
-            if (item.visible.includes(role)) {
+
+             // Her item için görünürlük kontrolünü logla
+             console.log(`Checking visibility for ${item.label}:`, item.visible);
+
+             
+            if (isVisible(item.visible)) {
               return (
                 <Link
                   href={item.href}
@@ -140,6 +168,7 @@ const Menu = () => {
                 </Link>
               );
             }
+            return null;
           })}
         </div>
       ))}
@@ -148,4 +177,3 @@ const Menu = () => {
 };
 
 export default Menu;
-

@@ -1,8 +1,8 @@
+// Gerekli kütüphanelerin ve bileşenlerin import edilmesi
 import Announcements from "@/components/Announcements";
 import BigCalendar from "@/components/BigCalendar";
 import FormModal from "@/components/FormModal";
-//import Performance from "@/components/Performance";
-import { role } from "@/lib/data";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import {
   Institutions,
@@ -11,13 +11,13 @@ import {
   PaymentTermTypes,
   Services,
   OfferSub,
+  UserRole
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-
-// Tip tanımlamasını buraya ekleyin
+// Teklif ile ilişkili verilerin tür tanımlamaları
 type OfferWithRelations = OfferCards & {
   paymentTerm: PaymentTermTypes;
   OfferSub: (OfferSub & {
@@ -27,14 +27,28 @@ type OfferWithRelations = OfferCards & {
   creatorIns: Institutions;
   recipient: User;
   recipientIns: Institutions;
-}
+};
 
+// Kullanıcının yetkili olup olmadığını kontrol eden fonksiyon
+const isAuthorized = (userRole: UserRole) => {
+  const authorizedRoles: Array<UserRole> = [
+    UserRole.ADMIN,
+    UserRole.HIZMETSAGLAYICI_SEVIYE2
+  ];
+  return authorizedRoles.includes(userRole);
+};
 
+// Tek bir teklif detayını gösteren sayfa bileşeni
 const SingleOfferPage = async ({
   params: { id },
 }: {
   params: { id: string };
 }) => {
+  // Kullanıcının oturumunu ve rol bilgisini alma
+  const session = await auth();
+  const currentUserRole = session?.user?.role as UserRole;
+
+  // Veritabanından teklif verisini çekme
   const offer: OfferWithRelations | null = await prisma.offerCards.findUnique({
     where: { id },
     include: {
@@ -51,22 +65,22 @@ const SingleOfferPage = async ({
     },
   });
 
+  // Teklif bulunamazsa 404 hatası gösterme
   if (!offer) {
     return notFound();
   }
 
+  // Teklif detaylarını ekrana bastıran JSX yapısı
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
-      {/* LEFT */}
+      {/* Sol taraf */}
       <div className="w-full xl:w-2/3">
-        {/* TOP */}
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* USER INFO CARD */}
           <div className="bg-lamaPurpleLight py-6 px-4 rounded-md flex-1 flex gap-4">
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">Teklif Kartı</h1>
-                {role === "admin" && (
+                {isAuthorized(currentUserRole) && (
                   <FormModal
                     table="offer"
                     type="update"
@@ -82,7 +96,7 @@ const SingleOfferPage = async ({
                       details: offer.details,
                       status: offer.status,
                       offerSub: offer.OfferSub.map(sub => ({
-                        serviceId: sub.servideId,
+                        serviceId: sub.service.id,
                         unitPrice: sub.unitPrice.toString(),
                         size: sub.size.toString(),
                         detail: sub.detail || '',
@@ -102,11 +116,11 @@ const SingleOfferPage = async ({
               <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
                   <Image src="/date.png" alt="" width={14} height={14} />
-                  <span>Teklif Tarihi: {offer.offerDate.toLocaleDateString('tr-TR')}</span>
+                  <span>Teklif Tarihi: {new Date(offer.offerDate).toLocaleDateString('tr-TR')}</span>
                 </div>
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
                   <Image src="/date.png" alt="" width={14} height={14} />
-                  <span>Geçerlilik Tarihi: {offer.validityDate.toLocaleDateString('tr-TR')}</span>
+                  <span>Geçerlilik Tarihi: {new Date(offer.validityDate).toLocaleDateString('tr-TR')}</span>
                 </div>
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
                   <Image src="/phone.png" alt="" width={14} height={14} />
@@ -123,53 +137,47 @@ const SingleOfferPage = async ({
               </div>
             </div>
           </div>
-          {/* SMALL CARDS */}
+          {/* Küçük kartlar bölgesi */}
           <div className="flex-1 flex gap-4 justify-between flex-wrap">
             {/* Müşteri Kartı */}
             <div className="bg-lamaSky p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[100%]">
-              <Image 
-                src="/smc-customer.png" 
-                alt="" 
-                width={96} 
-                height={96} 
+              <Image
+                src="/smc-customer.png"
+                alt=""
+                width={96}
+                height={96}
                 className="w-10 h-12"
               />
               <div>
                 <h1 className="text-md font-semibold">Müşteri</h1>
-                <span className="text-sm text-gray-400">
-                  {offer.recipient.name}
-                </span>
+                <span className="text-sm text-gray-400">{offer.recipient.name}</span>
                 <br />
-                <span className="text-sm text-gray-400">
-                  {offer.recipientIns.name}
-                </span>
+                <span className="text-sm text-gray-400">{offer.recipientIns.name}</span>
               </div>
             </div>
 
             {/* Ödeme Koşulu Kartı */}
             <div className="bg-lamaYellow p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[100%]">
-              <Image 
-                src="/smc-calendar.png" 
-                alt="" 
-                width={96} 
-                height={96} 
+              <Image
+                src="/smc-calendar.png"
+                alt=""
+                width={96}
+                height={96}
                 className="w-10 h-10"
               />
               <div>
                 <h1 className="text-md font-semibold">Ödeme Koşulu</h1>
-                <span className="text-sm text-gray-400">
-                  {offer.paymentTerm.name}
-                </span>
+                <span className="text-sm text-gray-400">{offer.paymentTerm.name}</span>
               </div>
             </div>
 
             {/* Tutar Kartı */}
             <div className="bg-lamaSky p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[100%]">
-              <Image 
-                src="/smc-price.png" 
-                alt="" 
-                width={96} 
-                height={96} 
+              <Image
+                src="/smc-price.png"
+                alt=""
+                width={96}
+                height={96}
                 className="w-10 h-10"
               />
               <div>
@@ -185,23 +193,24 @@ const SingleOfferPage = async ({
 
             {/* Durum Kartı */}
             <div className="bg-lamaYellow p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[100%]">
-              <Image 
-                src="/smc-status.png" 
-                alt="" 
-                width={96} 
-                height={96} 
+              <Image
+                src="/smc-status.png"
+                alt=""
+                width={96}
+                height={96}
                 className="w-10 h-10"
               />
               <div>
                 <h1 className="text-md font-semibold">Durumu</h1>
                 <span className="text-sm text-gray-400">{offer.status}</span>
               </div>
+
             </div>
           </div>
         </div>
       </div>
 
-      {/* RIGHT */}
+      {/* Sağ taraf */}
       <div className="w-full xl:w-1/3">
         <div className="bg-white p-4 rounded-md">
           <div className="flex items-center justify-between mb-4">
@@ -243,6 +252,5 @@ const SingleOfferPage = async ({
     </div>
   );
 };
-
 
 export default SingleOfferPage;

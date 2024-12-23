@@ -1,14 +1,18 @@
 import Announcements from "@/components/Announcements";
-import BigCalendar from "@/components/BigCalendar";
 import FormModal from "@/components/FormModal";
-import { role } from "@/lib/data";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { OfferRequests, RequestSub, Services, User, Institutions } from "@prisma/client";
+import { 
+  OfferRequests, 
+  RequestSub, 
+  Services, 
+  User, 
+  Institutions,
+  UserRole 
+} from "@prisma/client";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// İlişkili tipleri tanımlayalım
 type RequestWithSubs = OfferRequests & {
   creator: User;
   creatorIns: Institutions;
@@ -17,11 +21,22 @@ type RequestWithSubs = OfferRequests & {
   })[]
 }
 
+const isAuthorized = (userRole: UserRole) => {
+  const authorizedRoles: Array<UserRole> = [
+    UserRole.ADMIN,
+    UserRole.HIZMETSAGLAYICI_SEVIYE2
+  ];
+  return authorizedRoles.includes(userRole);
+};
+
 const SingleOfferRequestPage = async ({
   params: { id },
 }: {
   params: { id: string };
 }) => {
+  const session = await auth();
+  const currentUserRole = session?.user?.role as UserRole;
+
   const request: RequestWithSubs | null = await prisma.offerRequests.findUnique({
     where: { id },
     include: {
@@ -45,11 +60,8 @@ const SingleOfferRequestPage = async ({
 
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
-      {/* LEFT */}
       <div className="w-full xl:w-2/3">
-        {/* TOP */}
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* USER INFO CARD */}
           <div className="bg-lamaPurpleLight py-6 px-4 rounded-md flex-1 flex gap-4">
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -79,7 +91,7 @@ const SingleOfferRequestPage = async ({
                       Teklif Ver
                     </button>
                   </FormModal>
-                  {role === "admin" && (
+                  {isAuthorized(currentUserRole) && (
                     <FormModal
                       table="offerRequest"
                       type="update"
@@ -138,7 +150,6 @@ const SingleOfferRequestPage = async ({
         </div>
       </div>
 
-      {/* RIGHT */}
       <div className="w-full xl:w-1/3">
         <div className="bg-white p-4 rounded-md">
           <div className="flex items-center justify-between mb-4">
@@ -148,8 +159,7 @@ const SingleOfferRequestPage = async ({
             {request.RequestSub.map((sub, index) => (
               <div
                 key={sub.id}
-                className={`${index % 2 === 0 ? "bg-lamaSkyLight" : "bg-lamaPurpleLight"
-                  } p-4 rounded-md`}
+                className={`${index % 2 === 0 ? "bg-lamaSkyLight" : "bg-lamaPurpleLight"} p-4 rounded-md`}
               >
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium">{sub.service.name}</span>
