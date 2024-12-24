@@ -7,10 +7,10 @@ import Image from "next/image";
 const mapRolesToUserRoles = (roles: string[]): UserRole[] => {
   const roleMap: { [key: string]: UserRole } = {
     'admin': UserRole.ADMIN,
-    'provider': UserRole.HIZMETSAGLAYICI_SEVIYE2,
-    'lowprovider': UserRole.HIZMETSAGLAYICI_SEVIYE1,
-    'customer': UserRole.MUSTERI_SEVIYE2,
-    'lowcustomer': UserRole.MUSTERI_SEVIYE1
+    'provider': UserRole.HIZMETSAGLAYICI_SEVIYE1,
+    'lowprovider': UserRole.HIZMETSAGLAYICI_SEVIYE2,
+    'customer': UserRole.MUSTERI_SEVIYE1,
+    'lowcustomer': UserRole.MUSTERI_SEVIYE2
   };
   
   return roles.map(role => roleMap[role]).filter(role => role !== undefined);
