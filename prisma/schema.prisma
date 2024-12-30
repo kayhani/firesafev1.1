@@ -101,6 +101,18 @@ model Session {
   updatedAt DateTime @updatedAt
 }
 
+// Email verification için yeni model
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  type      String // "REGISTER" veya "LOGIN"
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}
+
 model VerificationToken {
   identifier String
   token      String

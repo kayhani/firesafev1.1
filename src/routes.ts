@@ -11,6 +11,8 @@ export const publicRoutes = [
     "/landpage/consultancy",
     "/landpage/education",
     "/landpage/services",
+
+    
 ];
 
 /**
@@ -23,6 +25,7 @@ export const authRoutes = [
     "/login",
     "/register",
     "/error",
+    "/verify",
     
 ];
 

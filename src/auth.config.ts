@@ -1,7 +1,5 @@
-//import Google from "next-auth/providers/google";
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { LoginSchema } from './schemas/index';
 import { getUserByEmail } from "./data/user";
 import bcrypt from 'bcryptjs';
 import Google from "next-auth/providers/google";
@@ -13,23 +11,21 @@ export default {
             clientSecret: process.env.AUTH_GOOGLE_SECRET
         }),
         Credentials({
-            async authorize(credentials) {
-                const validatedFields = LoginSchema.safeParse(credentials);
+            async authorize(credentials: Record<string, any>) {
+                try {
+                    if (!credentials?.email) {
+                        return null;
+                    }
 
-                if(validatedFields.success) {
-                    const { email, password} = validatedFields.data;
+                    const user = await getUserByEmail(credentials.email);
+                    if (!user) return null;
 
-                    const user = await getUserByEmail(email);
-                    if(!user || !user.password) return null;
+                    // Verification sonrası direkt user'ı döndür
+                    return user;
 
-                    const passwordMatch = await bcrypt.compare(
-                        password,
-                        user.password,
-                    );
-
-                    if(passwordMatch) return user;
+                } catch {
+                    return null;
                 }
-                return null;
             }
         })
     ],

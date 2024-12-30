@@ -1,40 +1,41 @@
 "use server";
 
 import * as z from "zod";
+import bcrypt from "bcryptjs";
 import { LoginSchema } from "@/schemas";
-import { signIn } from "@/auth";
-import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
-import { AuthError } from "next-auth";
-
-
+import { getUserByEmail } from "@/data/user";
+import { generateVerificationToken } from "@/lib/token";
+import { sendVerificationEmail } from "@/lib/mail";
+import { redirect } from "next/navigation";
 
 const login = async (values: z.infer<typeof LoginSchema>) => {
-    const validatedFields = LoginSchema.safeParse(values);
+  const validatedFields = LoginSchema.safeParse(values);
 
-    if(!validatedFields) {
-        return { error: "Invalid fields"};
-    };
+  if (!validatedFields.success) {
+    return { error: "Invalid fields" };
+  }
 
-    const {email, password} = validatedFields.data as { email: string; password: string };;
+  const { email, password } = validatedFields.data;
+  const user = await getUserByEmail(email);
 
-    try{
-        await signIn("credentials", {
-            email,
-            password,
-            redirectTo:  DEFAULT_LOGIN_REDIRECT,
-        })
+  if (!user || !user.password) {
+    return { error: "Invalid credentials!" };
+  }
 
-    }catch(error){
-        if(error instanceof AuthError) {
-            switch(error.type) {
-                case "CredentialsSignin": 
-                        return {error: "Invalid credentials!"}
-                default:
-                        return {error: "Something went wrong!"}
-            }
-        }
-        throw error;
-    }
+  const passwordMatch = await bcrypt.compare(password, user.password);
+
+  if (!passwordMatch) {
+    return { error: "Invalid credentials!" };
+  }
+
+  try {
+    const verificationToken = await generateVerificationToken(email, "LOGIN");
+    await sendVerificationEmail(email, verificationToken.token, "LOGIN");
+    
+    return { success: "Check your email for verification code!" };
+  } catch (error) {
+    return { error: "Something went wrong!" };
+  }
 };
 
 export default login;
