@@ -26,6 +26,7 @@ export const authRoutes = [
     "/register",
     "/error",
     "/verify",
+    "/logout",
     
 ];
 

@@ -8,45 +8,58 @@ import { JWT } from "@auth/core/jwt";
 import { User as PrismaUser } from "@prisma/client";
 import { AdapterUser } from "@auth/core/adapters";
 
-export const { 
-    handlers: { GET, POST }, 
-    signIn, 
-    signOut, 
-    auth 
+export const {
+  handlers: { GET, POST },
+  signIn,
+  signOut,
+  auth,
 } = NextAuth({
-    pages: {
-        signIn: "/login",
-        error: "/error",
+  pages: {
+    signIn: "/login",
+    error: "/error",
+  },
+  events: {
+    // Bir kullanıcı bir hesabı bağladığında çalışacak event
+    async linkAccount({ user }) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      });
     },
-    events: {
-        async linkAccount({ user }) {
-            await prisma.user.update({
-                where: { id: user.id },
-                data: { emailVerified: new Date() }
-            })
-        }
-    },
-    callbacks: {
-        async jwt({ token, user }) {
-            if (user) {
-                token.role = (user as PrismaUser).role;
-                token.id = user.id;
-            }
+  },
 
-            return token;
-        },
-        async session({ token, session }) {
-            if (token.sub && session.user) {
-                session.user.id = token.sub;
-            }
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = (user as PrismaUser).role;
+        token.id = user.id;
+      }
 
-            if (token.role && session.user) {
-                session.user.role = token.role as UserRole;
-            }
-            return session;
-        }
+      if (!token?.sub) return token;
+      const existingUser = await getUserById(token.sub);
+      if (!existingUser) return token;
+      token.role = existingUser.role;
+
+      return token;
     },
-    adapter: PrismaAdapter(prisma),
-    session: { strategy: "jwt" },
-    ...authConfig,
+    async session({ token, session }) {
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+      }
+
+      if (token.role && session.user) {
+        session.user.role = token.role as UserRole;
+      }
+
+      // Oturumu sonlandırma kontrolü: token yoksa oturumu temizle
+      if (!token) {
+        session.user = {} as any;
+      }
+
+      return session;
+    },
+  },
+  adapter: PrismaAdapter(prisma),
+  session: { strategy: "jwt" },
+  ...authConfig,
 });

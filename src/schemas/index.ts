@@ -7,6 +7,7 @@ export const LoginSchema = z.object({
     password: z.string().min(1, {
         message: "Password is required",
     }),
+    rememberDevice: z.boolean().default(false),
 });
 
 export const RegisterSchema = z.object({
@@ -18,4 +19,3 @@ export const RegisterSchema = z.object({
     }),
     name: z.string(),
 });
-

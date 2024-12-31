@@ -31,7 +31,7 @@ const login = async (values: z.infer<typeof LoginSchema>) => {
   try {
     const verificationToken = await generateVerificationToken(email, "LOGIN");
     await sendVerificationEmail(email, verificationToken.token, "LOGIN");
-    
+
     return { success: "Check your email for verification code!" };
   } catch (error) {
     return { error: "Something went wrong!" };
