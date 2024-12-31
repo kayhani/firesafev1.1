@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 
 interface Role {
-  id: string;
+  id: string; // Eğer id'ye ihtiyaç yoksa kaldırabilirsiniz
   name: string;
 }
 
@@ -15,37 +15,17 @@ interface RoleSelectProps {
   isLoading?: boolean;
 }
 
-const RoleSelect = ({ defaultValue, register, error, isLoading = false }: RoleSelectProps) => {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
+const roles: Role[] = [
+  { id: "ADMIN", name: "Admin" },
+  { id: "USER", name: "User" },
+  { id: "GUEST", name: "Guest" },
+  { id: "MUSTERI_SEVIYE1", name: "Müşteri Seviye 1" },
+  { id: "MUSTERI_SEVIYE2", name: "Müşteri Seviye 2" },
+  { id: "HIZMETSAGLAYICI_SEVIYE1", name: "Hizmet Sağlayıcı Seviye 1" },
+  { id: "HIZMETSAGLAYICI_SEVIYE2", name: "Hizmet Sağlayıcı Seviye 2" },
+];
 
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const response = await fetch('/api/roles');
-        const data = await response.json();
-        setRoles(data);
-      } catch (error) {
-        console.error('Error fetching roles:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRoles();
-  }, []);
-
-  if (loading || isLoading) {
-    return (
-      <div className="flex flex-col gap-2 w-full">
-        <label className="text-xs text-gray-500">Rol</label>
-        <select disabled className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full bg-gray-100">
-          <option>Yükleniyor...</option>
-        </select>
-      </div>
-    );
-  }
-
+const RoleSelect = ({ defaultValue, register, error }: RoleSelectProps) => {
   return (
     <div className="flex flex-col gap-2 w-full">
       <label className="text-xs text-gray-500">Rol</label>

@@ -1,7 +1,9 @@
 // app/api/deviceFeatures/route.ts
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { Prisma } from '@prisma/client';
+
+export const dynamic = 'force-dynamic'; // Bu satırı ekledik
+
 
 export async function GET(request: Request) {
     try {

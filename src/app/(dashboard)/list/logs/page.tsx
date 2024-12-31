@@ -56,9 +56,7 @@ const renderRow = (item: Log) => (
     <td className="hidden md:table-cell">{item.id}</td>
 
     <td className="hidden md:table-cell">{item.date.toLocaleDateString()}</td>
-    <td className="hidden md:table-cell">
-      {item.user.name}
-    </td>
+    <td className="hidden md:table-cell">{item.user.name}</td>
     <td className="hidden md:table-cell">{item.action.name}</td>
     <td className="hidden md:table-cell">{item.table.name}</td>
     <td className="hidden md:table-cell">{item.IP}</td>
@@ -71,12 +69,6 @@ const renderRow = (item: Log) => (
             <Image src="/view.png" alt="" width={24} height={24} />
           </button> */}
         </Link>
-        {role === "admin" && (
-          //<button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
-          //<Image src="/delete.png" alt="" width={16} height={16} />
-          // </button>
-          <FormModal table="log" type="delete" id={item.id} />
-        )}
       </div>
     </td>
   </tr>
@@ -147,12 +139,6 @@ const LogListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && (
-              // <button className="w-8 h-8 flex items-center justify-center rounded-full bg-firelightorange">
-              //     <Image src="/plus.png" alt="" width={14} height={14}/>
-              // </button>
-              <FormModal table="log" type="create" />
-            )}
           </div>
         </div>
       </div>

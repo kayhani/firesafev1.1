@@ -1,27 +1,15 @@
-// Bu kullanıcı oluşturma/güncelleme formu için detaylı döküm:
-// API Endpoints:
-// /api/users - Kullanıcı oluşturma endpoint'i (POST)
-// /api/users/${id} - Kullanıcı güncelleme endpoint'i (PUT)
-
-// Özel Componentler:
-// InputField - Form inputları için temel input bileşeni
-// RoleSelect - Rol seçimi için dropdown bileşeni
-// InstitutionSelect - Kurum seçimi için dropdown bileşeni
-
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-import InputField from "../InputField";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import * as z from "zod";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import RoleSelect from "@/components/RoleSelect";
-import InstitutionSelect from "@/components/InstitutionSelect";
+import Image from "next/image";
+import { UserRole } from "@prisma/client";
 
-const schema = z.object({
+// Form validation schema
+const formSchema = z.object({
     name: z.string()
         .min(3, { message: "Kullanıcı Adı min 3 karakter uzunluğunda olmalı!" })
         .max(20, { message: "Kullanıcı Adı maks 20 karakter uzunluğunda olmalı!" }),
@@ -29,10 +17,15 @@ const schema = z.object({
         .min(1, { message: "Email adresi zorunludur" })
         .email({ message: "Geçerli bir email adresi giriniz (örnek: kullanici@domain.com)" }),
     password: z.string()
-        .min(8, { message: "Şifre en az 8 karakter uzunluğunda olmalı!" }),
-    bloodType: z.enum(["ARhP", "ARhN", "BRhP", "BRhN", "ABRhP", "ABRhN", "ORhP", "ORhN"]).optional(),
-    birthday: z.string().optional(),
-    sex: z.enum(["Erkek", "Kadin", "Diger"]).optional(),
+        .min(8, { message: "Şifre en az 8 karakter uzunluğunda olmalı!" })
+        .optional()
+        .or(z.literal('')),
+    bloodType: z.enum(["ARhP", "ARhN", "BRhP", "BRhN", "ABRhP", "ABRhN", "ORhP", "ORhN"])
+        .optional(),
+    birthday: z.string()
+        .optional(),
+    sex: z.enum(["Erkek", "Kadin", "Diger"])
+        .optional(),
     phone: z.string()
         .refine((val) => {
             if (!val) return true;  // boş bırakılabilir
@@ -41,124 +34,139 @@ const schema = z.object({
         }, {
             message: "Telefon numarası 10 haneli olmalı ve sadece rakam içermelidir"
         }),
-    photo: z.any().optional(),  // File validation'ı kaldırıldı
+    photo: z.any().optional(),
     institutionId: z.string().min(1, { message: "Kurum seçimi zorunludur!" }),
     roleId: z.string().min(1, { message: "Rol seçimi zorunludur!" }),
-}).refine((data) => {
-    // Ek validation kuralları ekleyebiliriz
-    return true;
-}, {
-    message: "Form validation hatası"
 });
 
-type Inputs = z.infer<typeof schema>;
+type FormInputs = z.infer<typeof formSchema>;
 
-const UserForm = ({
-    type,
-    data,
-}: {
+interface UserFormProps {
     type: "create" | "update";
     data?: any;
-}) => {
+}
+
+const UserForm = ({ type, data }: UserFormProps) => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [institutions, setInstitutions] = useState<any[]>([]);
 
     const {
         register,
         handleSubmit,
-        setValue, // bunu ekledik
+        setValue,
         formState: { errors },
-    } = useForm<Inputs>({
-        resolver: zodResolver(schema),
+        watch
+    } = useForm<FormInputs>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            name: data?.name || "",
+            email: data?.email || "",
+            bloodType: data?.bloodType || undefined,
+            birthday: data?.birthday ? new Date(data.birthday).toISOString().split('T')[0] : undefined,
+            sex: data?.sex || undefined,
+            phone: data?.phone || "",
+            institutionId: data?.institutionId || "",
+            roleId: data?.role || "", // API'den role olarak geliyor
+        }
     });
 
-    // Form değerlerini ayarlamak için useEffect
+    // Kurumları yükle
     useEffect(() => {
-        if (data) {
-            setValue('institutionId', data.institutionId);
-            setValue('roleId', data.roleId);
+        const fetchInstitutions = async () => {
+            try {
+                const response = await fetch('/api/institutions');
+                if (!response.ok) throw new Error('Kurumlar yüklenemedi');
+                const data = await response.json();
+                setInstitutions(data);
+            } catch (error) {
+                console.error('Kurumlar yüklenirken hata:', error);
+            }
+        };
 
-            // Diğer alanları da setValue ile ayarlayalım ki tutarlı olsun
-            setValue('name', data.name);
-            setValue('email', data.email);
-            setValue('bloodType', data.bloodType);
-            setValue('birthday', data.birthday);
-            setValue('sex', data.sex);
-            setValue('phone', data.phone);
-        }
-    }, [data, setValue]);
+        fetchInstitutions();
+    }, []);
 
-
-    // Form submit öncesi validation hatalarını görelim
-    const onSubmit = async (formData: Inputs) => {
-        console.log("Form Submit Started");
-        console.log("Form Data:", formData);
-        console.log("Form Errors:", errors);
-
+    // Form submit handler
+    const onSubmit = async (formData: FormInputs) => {
         try {
-
-            console.log("Form verileri:", formData);
-            console.log("Telefon:", formData.phone);
-
             setLoading(true);
-
+            console.log("Form Submit Started - Data:", formData);
+    
             const submitData = new FormData();
+            
+            // Append only non-empty values to FormData
             Object.entries(formData).forEach(([key, value]) => {
-                if (value instanceof File) {
-                    submitData.append(key, value);
-                } else if (value !== undefined && value !== null) {
-                    submitData.append(key, String(value));
+                if (value !== undefined && value !== null && value !== '') {
+                    if (value instanceof File) {
+                        submitData.append(key, value);
+                    } else {
+                        submitData.append(key, String(value));
+                    }
                 }
             });
-
-            const validationResult = schema.safeParse(formData);
-            if (!validationResult.success) {
-                console.error("Validation hatası:", validationResult.error);
-                throw new Error("Form validation hatası");
-            }
-
-            // Update durumunda farklı endpoint ve method kullan
+    
+            // Debug FormData content with Array.from
+            Array.from(submitData.entries()).forEach(([key, value]) => {
+                console.log(key + ': ' + value);
+            });
+    
             const url = type === "create" ? '/api/users' : `/api/users/${data.id}`;
             const method = type === "create" ? 'POST' : 'PUT';
-
+    
             const response = await fetch(url, {
                 method,
                 body: submitData,
             });
-
+    
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error('İşlem başarısız oldu: ' + errorText);
             }
-
+    
+            const result = await response.json();
+            console.log("API Response:", result);
+    
             router.refresh();
             router.push('/list/users');
         } catch (error) {
             console.error('Submit Error:', error);
-            alert(type === "create" ? 'Kullanıcı kaydı sırasında bir hata oluştu!' : 'Kullanıcı güncelleme sırasında bir hata oluştu!');
+            alert(type === "create" ? 
+                'Kullanıcı kaydı sırasında bir hata oluştu!' : 
+                'Kullanıcı güncelleme sırasında bir hata oluştu!');
         } finally {
             setLoading(false);
         }
     };
 
-    // handleSubmit'in çalışıp çalışmadığını kontrol edelim
-    console.log("Form Component Rendered");
-
+    // Handle photo preview
+    const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPhotoPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     return (
         <form className="flex flex-col gap-4 max-w-7xl mx-auto w-full" onSubmit={handleSubmit(onSubmit)}>
-            <h1 className="text-xl font-semibold">Kullanıcı Oluştur</h1>
+            <h1 className="text-xl font-semibold">
+                {type === "create" ? "Yeni Kullanıcı Oluştur" : "Kullanıcı Düzenle"}
+            </h1>
 
-            {/* Kimlik Doğrulama Bilgileri */}
+            {/* Kimlik Bilgileri */}
             <div className="space-y-4">
-                <h2 className="text-sm font-medium text-gray-500">Kimlik Doğrulama Bilgileri</h2>
+                <h2 className="text-sm font-medium text-gray-500">Kimlik Bilgileri</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
                         <label className="text-xs text-gray-500">Ad Soyad</label>
                         <input
                             type="text"
                             {...register("name")}
-                            defaultValue={data?.name}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
                         />
                         {errors?.name && (
@@ -171,7 +179,6 @@ const UserForm = ({
                         <input
                             type="email"
                             {...register("email")}
-                            defaultValue={data?.email}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
                         />
                         {errors?.email && (
@@ -184,8 +191,8 @@ const UserForm = ({
                         <input
                             type="password"
                             {...register("password")}
-                            defaultValue={data?.password}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                            placeholder={type === "update" ? "Değiştirmek için yeni şifre girin" : "Şifre girin"}
                         />
                         {errors?.password && (
                             <span className="text-xs text-red-500">{errors.password.message}</span>
@@ -198,15 +205,10 @@ const UserForm = ({
             <div className="space-y-4">
                 <h2 className="text-sm font-medium text-gray-500">Kişisel Bilgiler</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-
-
-
-
                     <div className="flex flex-col gap-2">
                         <label className="text-xs text-gray-500">Kan Grubu</label>
                         <select
                             {...register("bloodType")}
-                            defaultValue={data?.bloodType}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
                         >
                             <option value="">Seçiniz</option>
@@ -229,7 +231,6 @@ const UserForm = ({
                         <input
                             type="date"
                             {...register("birthday")}
-                            defaultValue={data?.birthday}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
                         />
                         {errors?.birthday && (
@@ -241,7 +242,6 @@ const UserForm = ({
                         <label className="text-xs text-gray-500">Cinsiyet</label>
                         <select
                             {...register("sex")}
-                            defaultValue={data?.sex}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
                         >
                             <option value="">Seçiniz</option>
@@ -259,8 +259,8 @@ const UserForm = ({
                         <input
                             type="text"
                             {...register("phone")}
-                            defaultValue={data?.phone}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                            placeholder="5XX XXX XX XX"
                         />
                         {errors?.phone && (
                             <span className="text-xs text-red-500">{errors.phone.message}</span>
@@ -270,26 +270,43 @@ const UserForm = ({
             </div>
 
             {/* Kurum ve Rol Bilgileri */}
-            {/* Kurum ve Rol Bilgileri */}
             <div className="space-y-4">
                 <h2 className="text-sm font-medium text-gray-500">Kurum ve Rol Bilgileri</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
-                        <InstitutionSelect
-                            label="Kurum"
-                            name="institutionId"
-                            register={register}
-                            error={errors.institutionId}
-                            defaultValue={data?.institutionId}
-                        />
+                        <label className="text-xs text-gray-500">Kurum</label>
+                        <select
+                            {...register("institutionId")}
+                            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                        >
+                            <option value="">Kurum Seçiniz</option>
+                            {institutions.map((institution) => (
+                                <option key={institution.id} value={institution.id}>
+                                    {institution.name}
+                                </option>
+                            ))}
+                        </select>
+                        {errors?.institutionId && (
+                            <span className="text-xs text-red-500">{errors.institutionId.message}</span>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <RoleSelect
-                            register={register}
-                            error={errors.roleId}
-                            defaultValue={data?.roleId}
-                        />
+                        <label className="text-xs text-gray-500">Rol</label>
+                        <select
+                            {...register("roleId")}
+                            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                        >
+                            <option value="">Rol Seçiniz</option>
+                            {Object.values(UserRole).map((role) => (
+                                <option key={role} value={role}>
+                                    {role}
+                                </option>
+                            ))}
+                        </select>
+                        {errors?.roleId && (
+                            <span className="text-xs text-red-500">{errors.roleId.message}</span>
+                        )}
                     </div>
                 </div>
             </div>
@@ -298,8 +315,16 @@ const UserForm = ({
             <div className="space-y-4">
                 <h2 className="text-sm font-medium text-gray-500">Fotoğraf</h2>
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer" htmlFor="photo">
-                        <Image src="/upload.png" alt="" width={28} height={28} />
+                    <label 
+                        className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer" 
+                        htmlFor="photo"
+                    >
+                        <Image 
+                            src="/upload.png" 
+                            alt="Upload" 
+                            width={28} 
+                            height={28} 
+                        />
                         <span>Fotoğraf Yükle</span>
                     </label>
                     <input
