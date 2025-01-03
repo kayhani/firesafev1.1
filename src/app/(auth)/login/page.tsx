@@ -7,7 +7,7 @@ const Login: React.FC = async () => {
   const loggedIn = await isLoggedIn();
   
   if (loggedIn) {
-    redirect("/");
+    redirect("/admin");
   } else {
     return <LoginPage />;
   }
