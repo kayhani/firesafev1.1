@@ -14,9 +14,9 @@ export default function LogoutPage() {
           redirect: false,
         });
 
-        router.push("/login");
+        router.push("/");
       } catch (error) {
-        router.push("/login");
+        router.push("/");
       }
     };
 
