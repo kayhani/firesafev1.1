@@ -21,16 +21,18 @@ export async function PUT(
             return new NextResponse("Kullanıcı bulunamadı", { status: 404 });
         }
 
-        // Şifre kontrolü
-        let hashedPassword;
-        const password = formData.get('password') as string;
-        if (password && password !== existingUser.password) {
-            hashedPassword = await bcrypt.hash(password, 10);
-        }
+        // // Şifre kontrolü
+        // let hashedPassword;
+        // const password = formData.get('password') as string;
+        // if (password && password !== existingUser.password) {
+        //     hashedPassword = await bcrypt.hash(password, 10);
+        // }
 
         // Tarih kontrolü
         const birthdayStr = formData.get('birthday') as string;
         const birthday = birthdayStr ? new Date(birthdayStr) : null;
+        
+        const institutionId = formData.get('institutionId') as string;
 
         // Güncellenecek veriler
         const updateData: any = {
@@ -40,14 +42,22 @@ export async function PUT(
             birthday: birthday,
             sex: formData.get('sex') as UserSex || null,
             phone: formData.get('phone') as string || null,
-            institutionId: formData.get('institutionId') as string,
             role: formData.get('role') as string,
+
+            // Institution ilişkisini güncelle
+            institution: institutionId ? {
+                connect: {
+                    id: institutionId
+                }
+            } : {
+                disconnect: true
+            }
         };
 
-        // Şifre varsa ekle
-        if (hashedPassword) {
-            updateData.password = hashedPassword;
-        }
+        // // Şifre varsa ekle
+        // if (hashedPassword) {
+        //     updateData.password = hashedPassword;
+        // }
 
         // Fotoğraf varsa ekle
         const photo = formData.get('photo');
@@ -65,6 +75,7 @@ export async function PUT(
         });
 
         return NextResponse.json(updatedUser);
+
     } catch (error) {
         console.error("[USERS_PUT]", error);
         

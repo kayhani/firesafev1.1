@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import FormError from "@/components/form-error";
 import FormSuccess from "@/components/form-success";
 import { signIn } from "next-auth/react";
-import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
+import { DEFAULT_GUEST_REDIRECT } from "@/routes";
 
 const VerificationForm = () => {
   const router = useRouter();
@@ -62,7 +62,7 @@ const VerificationForm = () => {
               email,
               password: code,
               redirect: false,
-              callbackUrl: DEFAULT_LOGIN_REDIRECT,
+              callbackUrl: DEFAULT_GUEST_REDIRECT,
             });
 
             if (signInResult?.error) {
@@ -74,7 +74,7 @@ const VerificationForm = () => {
               // Başarılı login sonrası admin sayfasına yönlendir
               setSuccess("Login successful! Redirecting...");
               setTimeout(() => {
-                router.push(DEFAULT_LOGIN_REDIRECT);
+                router.push(DEFAULT_GUEST_REDIRECT);
               }, 1000);
             }
           } catch (error) {

@@ -44,4 +44,4 @@ export const apiAuthPrefix = "/api/auth";
  * * The default redirect after loggedin
  * * @type {string}
  */
-export const DEFAULT_LOGIN_REDIRECT = "/admin"
+export const DEFAULT_GUEST_REDIRECT = "/customer";

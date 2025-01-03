@@ -36,7 +36,7 @@ const formSchema = z.object({
         }),
     photo: z.any().optional(),
     institutionId: z.string().min(1, { message: "Kurum seçimi zorunludur!" }),
-    roleId: z.string().min(1, { message: "Rol seçimi zorunludur!" }),
+    role: z.string().min(1, { message: "Rol seçimi zorunludur!" }),
 });
 
 type FormInputs = z.infer<typeof formSchema>;
@@ -68,7 +68,7 @@ const UserForm = ({ type, data }: UserFormProps) => {
             sex: data?.sex || undefined,
             phone: data?.phone || "",
             institutionId: data?.institutionId || "",
-            roleId: data?.role || "", // API'den role olarak geliyor
+            role: data?.role || "", // API'den role olarak geliyor
         }
     });
 
@@ -186,7 +186,7 @@ const UserForm = ({ type, data }: UserFormProps) => {
                         )}
                     </div>
 
-                    <div className="flex flex-col gap-2">
+                    {/* <div className="flex flex-col gap-2">
                         <label className="text-xs text-gray-500">Şifre</label>
                         <input
                             type="password"
@@ -197,7 +197,7 @@ const UserForm = ({ type, data }: UserFormProps) => {
                         {errors?.password && (
                             <span className="text-xs text-red-500">{errors.password.message}</span>
                         )}
-                    </div>
+                    </div> */}
                 </div>
             </div>
 
@@ -294,7 +294,7 @@ const UserForm = ({ type, data }: UserFormProps) => {
                     <div className="flex flex-col gap-2">
                         <label className="text-xs text-gray-500">Rol</label>
                         <select
-                            {...register("roleId")}
+                            {...register("role")}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
                         >
                             <option value="">Rol Seçiniz</option>
@@ -304,8 +304,8 @@ const UserForm = ({ type, data }: UserFormProps) => {
                                 </option>
                             ))}
                         </select>
-                        {errors?.roleId && (
-                            <span className="text-xs text-red-500">{errors.roleId.message}</span>
+                        {errors?.role && (
+                            <span className="text-xs text-red-500">{errors.role.message}</span>
                         )}
                     </div>
                 </div>
