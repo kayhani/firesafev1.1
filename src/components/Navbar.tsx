@@ -6,7 +6,7 @@ const Navbar =  async () => {
 
   const session = await auth();
   
-  return <> (
+  return <> 
     <div className='flex items-center justify-between p-4'>
       {/* SEARCH BAR */}
       <div className='hidden md:flex items-center gap-2 text-xs rounded-full ring-[1.5px] ring-gray-300 px-2'>
@@ -29,7 +29,7 @@ const Navbar =  async () => {
         <Image src="/avatar.png" alt="" width={36} height={36} className="rounded-full"/>
       </div>
     </div>
-  )</>
+  </>
 }
 
 export default Navbar
