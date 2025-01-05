@@ -63,7 +63,7 @@ const SingleUserPage = async ({
                     type="update"
                     data={{
                       id: user.id,
-                      userName: user.name,
+                      name: user.name,
                       email: user.email,
                       bloodType: user.bloodType,
                       birthday: user.birthday
