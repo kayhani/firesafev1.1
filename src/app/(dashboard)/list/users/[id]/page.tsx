@@ -37,6 +37,9 @@ const SingleUserPage = async ({
     return notFound();
   }
 
+  {console.log("SingleUserPage institution data:", user.institutionId)}
+
+
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
       {/* LEFT */}

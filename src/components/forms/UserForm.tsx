@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { UserRole } from "@prisma/client";
 
-// Form validation schema
 const formSchema = z.object({
     name: z.string()
         .min(3, { message: "Kullanıcı Adı min 3 karakter uzunluğunda olmalı!" })
@@ -28,7 +27,7 @@ const formSchema = z.object({
         .optional(),
     phone: z.string()
         .refine((val) => {
-            if (!val) return true;  // boş bırakılabilir
+            if (!val) return true;
             const phoneRegex = /^[0-9]{10}$/;
             return phoneRegex.test(val.replace(/\s/g, ''));
         }, {
@@ -56,11 +55,12 @@ const UserForm = ({ type, data }: UserFormProps) => {
         register,
         handleSubmit,
         setValue,
+        reset,
         formState: { errors },
         watch
     } = useForm<FormInputs>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
+        defaultValues: type === "update" ? {
             name: data?.name || "",
             email: data?.email || "",
             bloodType: data?.bloodType || undefined,
@@ -68,18 +68,22 @@ const UserForm = ({ type, data }: UserFormProps) => {
             sex: data?.sex || undefined,
             phone: data?.phone || "",
             institutionId: data?.institutionId || "",
-            role: data?.role || "", // API'den role olarak geliyor
-        }
+            role: data?.role || "",
+        } : undefined
     });
 
-    // Kurumları yükle
+    console.log("Form initialized with data:", data); // Debug için
+
     useEffect(() => {
         const fetchInstitutions = async () => {
             try {
                 const response = await fetch('/api/institutions');
                 if (!response.ok) throw new Error('Kurumlar yüklenemedi');
-                const data = await response.json();
-                setInstitutions(data);
+                const institutionsData = await response.json();
+                setInstitutions(institutionsData);
+                
+                console.log("Institutions loaded:", institutionsData);
+                console.log("Current institutionId:", data?.institutionId);
             } catch (error) {
                 console.error('Kurumlar yüklenirken hata:', error);
             }
@@ -88,7 +92,22 @@ const UserForm = ({ type, data }: UserFormProps) => {
         fetchInstitutions();
     }, []);
 
-    // Form submit handler
+    useEffect(() => {
+        if (data && type === "update") {
+            console.log("Resetting form with data:", data);
+            reset({
+                name: data.name || "",
+                email: data.email || "",
+                bloodType: data.bloodType || undefined,
+                birthday: data.birthday ? new Date(data.birthday).toISOString().split('T')[0] : undefined,
+                sex: data.sex || undefined,
+                phone: data.phone || "",
+                institutionId: data.institutionId || "",
+                role: data.role || "",
+            });
+        }
+    }, [data, type, reset]);
+
     const onSubmit = async (formData: FormInputs) => {
         try {
             setLoading(true);
@@ -96,7 +115,6 @@ const UserForm = ({ type, data }: UserFormProps) => {
     
             const submitData = new FormData();
             
-            // Append only non-empty values to FormData
             Object.entries(formData).forEach(([key, value]) => {
                 if (value !== undefined && value !== null && value !== '') {
                     if (value instanceof File) {
@@ -105,11 +123,6 @@ const UserForm = ({ type, data }: UserFormProps) => {
                         submitData.append(key, String(value));
                     }
                 }
-            });
-    
-            // Debug FormData content with Array.from
-            Array.from(submitData.entries()).forEach(([key, value]) => {
-                console.log(key + ': ' + value);
             });
     
             const url = type === "create" ? '/api/users' : `/api/users/${data.id}`;
@@ -140,7 +153,6 @@ const UserForm = ({ type, data }: UserFormProps) => {
         }
     };
 
-    // Handle photo preview
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -185,19 +197,6 @@ const UserForm = ({ type, data }: UserFormProps) => {
                             <span className="text-xs text-red-500">{errors.email.message}</span>
                         )}
                     </div>
-
-                    {/* <div className="flex flex-col gap-2">
-                        <label className="text-xs text-gray-500">Şifre</label>
-                        <input
-                            type="password"
-                            {...register("password")}
-                            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
-                            placeholder={type === "update" ? "Değiştirmek için yeni şifre girin" : "Şifre girin"}
-                        />
-                        {errors?.password && (
-                            <span className="text-xs text-red-500">{errors.password.message}</span>
-                        )}
-                    </div> */}
                 </div>
             </div>
 
@@ -278,10 +277,15 @@ const UserForm = ({ type, data }: UserFormProps) => {
                         <select
                             {...register("institutionId")}
                             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
+                            value={watch("institutionId") || ""}
+                            onChange={(e) => setValue("institutionId", e.target.value)}
                         >
                             <option value="">Kurum Seçiniz</option>
                             {institutions.map((institution) => (
-                                <option key={institution.id} value={institution.id}>
+                                <option 
+                                    key={institution.id} 
+                                    value={institution.id}
+                                >
                                     {institution.name}
                                 </option>
                             ))}
@@ -333,16 +337,23 @@ const UserForm = ({ type, data }: UserFormProps) => {
                         accept="image/*"
                         {...register("photo")}
                         className="hidden"
-                        onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                                // File handling logic
-                            }
-                        }}
+                        onChange={handlePhotoChange}
                     />
+                    {photoPreview && (
+                        <div className="mt-2">
+                            <Image
+                                src={photoPreview}
+                                alt="Preview"
+                                width={100}
+                                height={100}
+                                className="rounded-md"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
+            {/* Submit Button */}
             <button
                 type="submit"
                 disabled={loading}
