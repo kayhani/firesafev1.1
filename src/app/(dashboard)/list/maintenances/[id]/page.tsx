@@ -35,12 +35,30 @@ type MaintenanceType = MaintenanceCards & {
   }[];
 };
 
-const isAuthorized = (userRole: UserRole) => {
-  const authorizedRoles: Array<UserRole> = [
-    UserRole.ADMIN,
-    UserRole.HIZMETSAGLAYICI_SEVIYE2
-  ];
-  return authorizedRoles.includes(userRole);
+const isAuthorized = (
+  currentUserRole: UserRole,
+  currentUserId: string,
+  currentUserInstitutionId: string | null,
+  maintenanceProviderId: string,
+  maintenanceProviderInstitutionId: string
+) => {
+  // ADMIN her bakımı güncelleyebilir
+  if (currentUserRole === UserRole.ADMIN) {
+    return true;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE1 kendi kurumunun tüm bakımlarını güncelleyebilir
+  if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1) {
+    return currentUserInstitutionId === maintenanceProviderInstitutionId;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE2 sadece kendi provider olduğu bakımları güncelleyebilir
+  if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
+    return currentUserId === maintenanceProviderId;
+  }
+
+  // MUSTERI_SEVIYE1 ve MUSTERI_SEVIYE2 hiçbir bakımı güncelleyemez
+  return false;
 };
 
 const SingleMaintenancePage = async ({
@@ -49,7 +67,19 @@ const SingleMaintenancePage = async ({
   params: { id: string };
 }) => {
   const session = await auth();
-  const currentUserRole = session?.user?.role as UserRole;
+
+  if (!session?.user?.id) {
+    return notFound();
+  }
+
+  const currentUserRole = session.user.role as UserRole;
+  const currentUserId = session.user.id;
+
+  // Mevcut kullanıcının kurum bilgisini almak için
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { institutionId: true }
+  });
 
   const maintenance = (await prisma.maintenanceCards.findUnique({
     where: { id },
@@ -73,6 +103,14 @@ const SingleMaintenancePage = async ({
     return notFound();
   }
 
+  const canUpdate = isAuthorized(
+    currentUserRole,
+    currentUserId,
+    currentUser?.institutionId ?? null,
+    maintenance.providerId,
+    maintenance.providerInsId
+  );
+
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
       <div className="w-full xl:w-2/3">
@@ -81,7 +119,7 @@ const SingleMaintenancePage = async ({
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">Bakım Kartı</h1>
-                {isAuthorized(currentUserRole) && (
+                {canUpdate && (
                   <FormModal
                     table="maintenance"
                     type="update"
@@ -93,6 +131,7 @@ const SingleMaintenancePage = async ({
                       details: maintenance.details,
                       operations: maintenance.MaintenanceSub.map(sub => sub.opreation.id)
                     }}
+                    currentUserRole={currentUserRole}
                   />
                 )}
               </div>
@@ -105,9 +144,7 @@ const SingleMaintenancePage = async ({
                   <span>Cihaz Seri No: {maintenance.device.serialNumber}</span>
                 </div>
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
-                  <span>
-                    Cihaz Sorumlusu: {maintenance.customer.name}
-                  </span>
+                  <span>Cihaz Sorumlusu: {maintenance.customer.name}</span>
                 </div>
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-2/3 flex items-center gap-2">
                   <span>Cihaz Sahibi: {maintenance.customerIns.name}</span>

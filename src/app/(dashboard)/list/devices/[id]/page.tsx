@@ -16,12 +16,30 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-const isAuthorized = (userRole: UserRole) => {
-  const authorizedRoles: Array<UserRole> = [
-    UserRole.ADMIN,
-    UserRole.HIZMETSAGLAYICI_SEVIYE2
-  ];
-  return authorizedRoles.includes(userRole);
+const isAuthorized = (
+  currentUserRole: UserRole,
+  currentUserId: string,
+  currentUserInstitutionId: string | null,
+  deviceOwnerId: string,
+  deviceOwnerInstitutionId: string
+) => {
+  // ADMIN her cihazı güncelleyebilir
+  if (currentUserRole === UserRole.ADMIN) {
+    return true;
+  }
+
+  // MUSTERI_SEVIYE1 kendi kurumuna ait tüm cihazları güncelleyebilir
+  if (currentUserRole === UserRole.MUSTERI_SEVIYE1) {
+    return currentUserInstitutionId === deviceOwnerInstitutionId;
+  }
+
+  // MUSTERI_SEVIYE2 sadece kendi sahibi olduğu cihazları güncelleyebilir
+  if (currentUserRole === UserRole.MUSTERI_SEVIYE2) {
+    return currentUserId === deviceOwnerId;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE1 ve HIZMETSAGLAYICI_SEVIYE2 hiçbir cihazı güncelleyemez
+  return false;
 };
 
 const SingleDevicePage = async ({
@@ -30,7 +48,19 @@ const SingleDevicePage = async ({
   params: { id: string };
 }) => {
   const session = await auth();
-  const currentUserRole = session?.user?.role as UserRole;
+
+  if (!session?.user?.id) {
+    return notFound();
+  }
+
+  const currentUserRole = session.user.role as UserRole;
+  const currentUserId = session.user.id;
+
+  // Mevcut kullanıcının kurum bilgisini almak için
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { institutionId: true }
+  });
 
   const deviceId = id;
   const device:
@@ -60,6 +90,14 @@ const SingleDevicePage = async ({
     return notFound();
   }
 
+  const canUpdate = isAuthorized(
+    currentUserRole,
+    currentUserId,
+    currentUser?.institutionId ?? null,
+    device.ownerId,
+    device.ownerInstId
+  );
+
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
       <div className="w-full xl:w-2/3">
@@ -87,7 +125,7 @@ const SingleDevicePage = async ({
                 <h1 className="text-xl font-semibold">
                   Yangın Güvenlik Önlemi Kartı
                 </h1>
-                {isAuthorized(currentUserRole) && (
+                {canUpdate && (
                   <FormModal
                     table="device"
                     type="update"
@@ -111,6 +149,7 @@ const SingleDevicePage = async ({
                       details: device.details || "",
                       photo: device.photo || ""
                     }}
+                    currentUserRole={currentUserRole}
                   />
                 )}
               </div>

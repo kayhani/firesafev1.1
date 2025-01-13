@@ -13,12 +13,30 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-const isAuthorized = (userRole: UserRole) => {
-  const authorizedRoles: Array<UserRole> = [
-    UserRole.ADMIN,
-    UserRole.HIZMETSAGLAYICI_SEVIYE2
-  ];
-  return authorizedRoles.includes(userRole);
+const isAuthorized = (
+  currentUserRole: UserRole,
+  currentUserId: string,
+  currentUserInstitutionId: string | null,
+  eventCreatorId: string,
+  eventCreatorInstitutionId: string
+) => {
+  // ADMIN her randevuyu güncelleyebilir
+  if (currentUserRole === UserRole.ADMIN) {
+    return true;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE1 kendi kurumunun tüm randevularını güncelleyebilir
+  if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1) {
+    return currentUserInstitutionId === eventCreatorInstitutionId;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE2 sadece kendi oluşturduğu randevuları güncelleyebilir
+  if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
+    return currentUserId === eventCreatorId;
+  }
+
+  // MUSTERI_SEVIYE1 ve MUSTERI_SEVIYE2 hiçbir randevuyu güncelleyemez
+  return false;
 };
 
 const SingleEventPage = async ({
@@ -27,7 +45,19 @@ const SingleEventPage = async ({
   params: { id: string };
 }) => {
   const session = await auth();
-  const currentUserRole = session?.user?.role as UserRole;
+
+  if (!session?.user?.id) {
+    return notFound();
+  }
+
+  const currentUserRole = session.user.role as UserRole;
+  const currentUserId = session.user.id;
+
+  // Mevcut kullanıcının kurum bilgisini almak için
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { institutionId: true }
+  });
 
   const eventId = id;
   const event:
@@ -51,6 +81,14 @@ const SingleEventPage = async ({
     return notFound();
   }
 
+  const canUpdate = isAuthorized(
+    currentUserRole,
+    currentUserId,
+    currentUser?.institutionId ?? null,
+    event.creator.id,
+    event.creatorIns.id
+  );
+
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
       <div className="w-full xl:w-2/3">
@@ -59,7 +97,7 @@ const SingleEventPage = async ({
             <div className="w-full flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">Randevu Kartı</h1>
-                {isAuthorized(currentUserRole) && (
+                {canUpdate && (
                   <FormModal
                     table="event"
                     type="update"
@@ -74,6 +112,7 @@ const SingleEventPage = async ({
                       start: new Date(event.start).toISOString().slice(0, 16),
                       end: new Date(event.end).toISOString().slice(0, 16)
                     }}
+                    currentUserRole={currentUserRole}
                   />
                 )}
               </div>

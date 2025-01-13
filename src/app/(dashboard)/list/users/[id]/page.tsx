@@ -8,12 +8,39 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-const isAuthorized = (userRole: UserRole) => {
-  const authorizedRoles: Array<UserRole> = [
-    UserRole.ADMIN,
-    UserRole.HIZMETSAGLAYICI_SEVIYE2
-  ];
-  return authorizedRoles.includes(userRole);
+const isAuthorized = (
+  currentUserRole: UserRole,
+  currentUserId: string,
+  currentUserInstitutionId: string | null,
+  targetUserId: string,
+  targetUserInstitutionId: string | null
+) => {
+  // ADMIN her kullanıcıyı güncelleyebilir
+  if (currentUserRole === UserRole.ADMIN) {
+    return true;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE1 sadece kendi kurumundaki kullanıcıları güncelleyebilir
+  if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1) {
+    return currentUserInstitutionId && currentUserInstitutionId === targetUserInstitutionId;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE2 sadece kendi profilini güncelleyebilir
+  if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
+    return currentUserId === targetUserId;
+  }
+
+  // MUSTERI_SEVIYE1 sadece kendi kurumundaki kullanıcıları güncelleyebilir
+  if (currentUserRole === UserRole.MUSTERI_SEVIYE1) {
+    return currentUserInstitutionId && currentUserInstitutionId === targetUserInstitutionId;
+  }
+
+  // MUSTERI_SEVIYE2 sadece kendi profilini güncelleyebilir
+  if (currentUserRole === UserRole.MUSTERI_SEVIYE2) {
+    return currentUserId === targetUserId;
+  }
+
+  return false;
 };
 
 const SingleUserPage = async ({
@@ -22,7 +49,19 @@ const SingleUserPage = async ({
   params: { id: string };
 }) => {
   const session = await auth();
-  const currentUserRole = session?.user?.role as UserRole;
+
+  if (!session?.user?.id) {
+    return notFound();
+  }
+
+  const currentUserRole = session.user.role as UserRole;
+  const currentUserId = session.user.id;
+
+  // Mevcut kullanıcının kurum bilgisini almak için
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { institutionId: true }
+  });
 
   const userId = id;
   const user: (User & { institution: Institutions | null }) | null =
@@ -37,8 +76,13 @@ const SingleUserPage = async ({
     return notFound();
   }
 
-  {console.log("SingleUserPage institution data:", user.institutionId)}
-
+  const canUpdate = isAuthorized(
+    currentUserRole,
+    currentUserId,
+    currentUser?.institutionId ?? null,
+    user.id,
+    user.institutionId
+  );
 
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
@@ -60,7 +104,7 @@ const SingleUserPage = async ({
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">{user.name}</h1>
-                {isAuthorized(currentUserRole) && (
+                {canUpdate && (
                   <FormModal
                     table="user"
                     type="update"
@@ -78,7 +122,7 @@ const SingleUserPage = async ({
                       institutionId: user.institutionId,
                       role: user.role,
                     }}
-                    currentUserRole={currentUserRole}  // Bunu ekleyelim
+                    currentUserRole={currentUserRole}
                   />
                 )}
               </div>

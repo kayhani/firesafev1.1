@@ -21,12 +21,30 @@ type RequestWithSubs = OfferRequests & {
   })[]
 }
 
-const isAuthorized = (userRole: UserRole) => {
-  const authorizedRoles: Array<UserRole> = [
-    UserRole.ADMIN,
-    UserRole.HIZMETSAGLAYICI_SEVIYE2
-  ];
-  return authorizedRoles.includes(userRole);
+const isAuthorized = (
+  currentUserRole: UserRole,
+  currentUserId: string,
+  currentUserInstitutionId: string | null,
+  requestCreatorId: string,
+  requestCreatorInstitutionId: string
+) => {
+  // ADMIN her teklif talebini güncelleyebilir
+  if (currentUserRole === UserRole.ADMIN) {
+    return true;
+  }
+
+  // MUSTERI_SEVIYE1 kendi kurumunun tüm teklif taleplerini güncelleyebilir
+  if (currentUserRole === UserRole.MUSTERI_SEVIYE1) {
+    return currentUserInstitutionId === requestCreatorInstitutionId;
+  }
+
+  // MUSTERI_SEVIYE2 sadece kendi oluşturduğu teklif taleplerini güncelleyebilir
+  if (currentUserRole === UserRole.MUSTERI_SEVIYE2) {
+    return currentUserId === requestCreatorId;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE1 ve HIZMETSAGLAYICI_SEVIYE2 hiçbir teklif talebini güncelleyemez
+  return false;
 };
 
 const SingleOfferRequestPage = async ({
@@ -35,7 +53,19 @@ const SingleOfferRequestPage = async ({
   params: { id: string };
 }) => {
   const session = await auth();
-  const currentUserRole = session?.user?.role as UserRole;
+
+  if (!session?.user?.id) {
+    return notFound();
+  }
+
+  const currentUserRole = session.user.role as UserRole;
+  const currentUserId = session.user.id;
+
+  // Mevcut kullanıcının kurum bilgisini almak için
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { institutionId: true }
+  });
 
   const request: RequestWithSubs | null = await prisma.offerRequests.findUnique({
     where: { id },
@@ -53,6 +83,14 @@ const SingleOfferRequestPage = async ({
   if (!request) {
     return notFound();
   }
+
+  const canUpdate = isAuthorized(
+    currentUserRole,
+    currentUserId,
+    currentUser?.institutionId ?? null,
+    request.creatorId,
+    request.creatorInsId
+  );
 
   const creatorFullName = [request.creator.name]
     .filter(Boolean)
@@ -91,7 +129,7 @@ const SingleOfferRequestPage = async ({
                       Teklif Ver
                     </button>
                   </FormModal>
-                  {isAuthorized(currentUserRole) && (
+                  {canUpdate && (
                     <FormModal
                       table="offerRequest"
                       type="update"
@@ -110,6 +148,7 @@ const SingleOfferRequestPage = async ({
                           detail: sub.detail
                         }))
                       }}
+                      currentUserRole={currentUserRole}
                     />
                   )}
                 </div>

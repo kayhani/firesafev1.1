@@ -11,12 +11,28 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-const isAuthorized = (userRole: UserRole) => {
-  const authorizedRoles: Array<UserRole> = [
-    UserRole.ADMIN,
-    UserRole.HIZMETSAGLAYICI_SEVIYE2
-  ];
-  return authorizedRoles.includes(userRole);
+const isAuthorized = (
+  currentUserRole: UserRole,
+  currentUserInstitutionId: string | null,
+  targetInstitutionId: string
+) => {
+  // ADMIN her kurumu güncelleyebilir
+  if (currentUserRole === UserRole.ADMIN) {
+    return true;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE1 sadece kendi kurumunu güncelleyebilir
+  if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1) {
+    return currentUserInstitutionId === targetInstitutionId;
+  }
+
+  // MUSTERI_SEVIYE1 sadece kendi kurumunu güncelleyebilir
+  if (currentUserRole === UserRole.MUSTERI_SEVIYE1) {
+    return currentUserInstitutionId === targetInstitutionId;
+  }
+
+  // HIZMETSAGLAYICI_SEVIYE2 ve MUSTERI_SEVIYE2 hiçbir kurumu güncelleyemez
+  return false;
 };
 
 const SingleInstitutionPage = async ({
@@ -25,7 +41,19 @@ const SingleInstitutionPage = async ({
   params: { id: string };
 }) => {
   const session = await auth();
-  const currentUserRole = session?.user?.role as UserRole;
+
+  if (!session?.user?.id) {
+    return notFound();
+  }
+
+  const currentUserRole = session.user.role as UserRole;
+  const currentUserId = session.user.id;
+
+  // Mevcut kullanıcının kurum bilgisini almak için
+  const currentUser = await prisma.user.findUnique({
+    where: { id: currentUserId },
+    select: { institutionId: true }
+  });
 
   const instId = id;
   const inst: Institutions | null = await prisma.institutions.findUnique({
@@ -36,6 +64,12 @@ const SingleInstitutionPage = async ({
     return notFound();
   }
 
+  const canUpdate = isAuthorized(
+    currentUserRole,
+    currentUser?.institutionId ?? null,
+    inst.id
+  );
+
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
       <div className="w-full xl:w-2/3">
@@ -44,7 +78,7 @@ const SingleInstitutionPage = async ({
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h1 className="text-xl font-semibold">Kurum Kartı</h1>
-                {isAuthorized(currentUserRole) && (
+                {canUpdate && (
                   <FormModal
                     table="institution"
                     type="update"
@@ -56,6 +90,7 @@ const SingleInstitutionPage = async ({
                       phone: inst.phone,
                       registrationDate: inst.registrationDate.toISOString().split('T')[0],
                     }}
+                    currentUserRole={currentUserRole}
                   />
                 )}
               </div>
