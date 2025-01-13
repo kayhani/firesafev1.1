@@ -43,9 +43,10 @@ type FormInputs = z.infer<typeof formSchema>;
 interface UserFormProps {
     type: "create" | "update";
     data?: any;
+    currentUserRole?: UserRole;
 }
 
-const UserForm = ({ type, data }: UserFormProps) => {
+    const UserForm = ({ type, data, currentUserRole }: UserFormProps) => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -163,6 +164,9 @@ const UserForm = ({ type, data }: UserFormProps) => {
             reader.readAsDataURL(file);
         }
     };
+
+    //const isAdmin = currentUserRole === UserRole.ADMIN;
+    const isAdmin = type === "create" || currentUserRole === UserRole.ADMIN;
 
     return (
         <form className="flex flex-col gap-4 max-w-7xl mx-auto w-full" onSubmit={handleSubmit(onSubmit)}>
@@ -296,22 +300,25 @@ const UserForm = ({ type, data }: UserFormProps) => {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs text-gray-500">Rol</label>
-                        <select
-                            {...register("role")}
-                            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm"
-                        >
-                            <option value="">Rol Seçiniz</option>
-                            {Object.values(UserRole).map((role) => (
-                                <option key={role} value={role}>
-                                    {role}
-                                </option>
-                            ))}
-                        </select>
-                        {errors?.role && (
-                            <span className="text-xs text-red-500">{errors.role.message}</span>
-                        )}
-                    </div>
+        <label className="text-xs text-gray-500">Rol</label>
+        <select
+          {...register("role")}
+          className={`ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm ${
+            !isAdmin ? 'bg-gray-100 cursor-not-allowed' : ''
+          }`}
+          disabled={!isAdmin}
+        >
+          <option value="">Rol Seçiniz</option>
+          {Object.values(UserRole).map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </select>
+        {errors?.role && (
+          <span className="text-xs text-red-500">{errors.role.message}</span>
+        )}
+      </div>
                 </div>
             </div>
 

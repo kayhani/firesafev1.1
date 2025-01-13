@@ -54,10 +54,57 @@ const columns = [
   },
 ];
 
-const isAuthorized = (userRole: UserRole) => {
+const canViewDevices = (
+  userRole: UserRole,
+  deviceOwnerId: string | null, 
+  deviceProviderId: string | null,
+  currentUserId: string | null | undefined
+) => {
+  if (userRole === UserRole.ADMIN) return true;
+
+  // Müşteri rolündeki kullanıcılar sadece sahip oldukları cihazları görebilir
+  if (
+    (userRole === UserRole.MUSTERI_SEVIYE1 || 
+     userRole === UserRole.MUSTERI_SEVIYE2) &&
+    deviceOwnerId === currentUserId
+  ) {
+    return true;
+  }
+
+  // Hizmet sağlayıcı rolündeki kullanıcılar sadece hizmet verdikleri cihazları görebilir
+  if (
+    (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 || 
+     userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) &&
+    deviceProviderId === currentUserId
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const canDeleteDevice = (
+  userRole: UserRole,
+  deviceOwnerId: string | null,
+  currentUserId: string | null | undefined
+) => {
+  if (userRole === UserRole.ADMIN) return true;
+
+  // Sadece SEVIYE1 müşteriler sahip oldukları cihazları silebilir
+  if (
+    userRole === UserRole.MUSTERI_SEVIYE1 &&
+    deviceOwnerId === currentUserId
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const canCreateDevice = (userRole: UserRole) => {
   const authorizedRoles: Array<UserRole> = [
     UserRole.ADMIN,
-    UserRole.HIZMETSAGLAYICI_SEVIYE2
+    UserRole.MUSTERI_SEVIYE1
   ];
   return authorizedRoles.includes(userRole);
 };
@@ -69,8 +116,18 @@ const DeviceListPage = async ({
 }) => {
   const session = await auth();
   const currentUserRole = session?.user?.role as UserRole;
+  
+  const currentUser = session?.user?.email ? await prisma.user.findUnique({
+    where: { email: session.user.email }
+  }) : null;
 
-  const renderRow = (item: DeviceList) => (
+  const currentUserId = currentUser?.id;
+
+  const renderRow = (
+    item: DeviceList,
+    userRole: UserRole,
+    userId: string | null | undefined
+  ) => (
     <tr
       key={item.id}
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight"
@@ -97,12 +154,14 @@ const DeviceListPage = async ({
       <td className="hidden md:table-cell">{item.currentStatus}</td>
       <td>
         <div className="flex items-center gap-2">
-          <Link href={`/list/devices/${item.id}`}>
-            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
-              <Image src="/view.png" alt="" width={24} height={24} />
-            </button>
-          </Link>
-          {isAuthorized(currentUserRole) && (
+          {canViewDevices(userRole, item.ownerId, item.providerId, userId) && (
+            <Link href={`/list/devices/${item.id}`}>
+              <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
+                <Image src="/view.png" alt="" width={24} height={24} />
+              </button>
+            </Link>
+          )}
+          {canDeleteDevice(userRole, item.ownerId, userId) && (
             <FormModal table="device" type="delete" id={item.id} />
           )}
         </div>
@@ -114,6 +173,19 @@ const DeviceListPage = async ({
   const p = page ? parseInt(page) : 1;
 
   const query: Prisma.DevicesWhereInput = {};
+
+  // ADMIN değilse, role göre filtreleme yap
+  if (currentUserRole !== UserRole.ADMIN && currentUserId) {
+    if (currentUserRole === UserRole.MUSTERI_SEVIYE1 || 
+        currentUserRole === UserRole.MUSTERI_SEVIYE2) {
+      // Müşteri rolündeki kullanıcılar sadece sahip oldukları cihazları görebilir
+      query.ownerId = currentUserId;
+    } else if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 || 
+               currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
+      // Hizmet sağlayıcı rolündeki kullanıcılar sadece hizmet verdikleri cihazları görebilir
+      query.providerId = currentUserId;
+    }
+  }
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
@@ -158,25 +230,31 @@ const DeviceListPage = async ({
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
     }),
-    prisma.devices.count(),
+    prisma.devices.count({ where: query }),
   ]);
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       <div className="flex item-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">
-          Tüm Yangın Güvenlik Önlemleri
+          {currentUserRole === UserRole.ADMIN 
+            ? 'Tüm Yangın Güvenlik Önlemleri'
+            : currentUserRole.startsWith('MUSTERI') 
+              ? 'Sahip Olduğunuz Yangın Güvenlik Önlemleri'
+              : 'Hizmet Verdiğiniz Yangın Güvenlik Önlemleri'}
         </h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
+            {currentUserRole === UserRole.ADMIN && (
+              <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+                <Image src="/filter.png" alt="" width={14} height={14} />
+              </button>
+            )}
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {isAuthorized(currentUserRole) && (
+            {canCreateDevice(currentUserRole) && (
               <FormModal table="device" type="create" />
             )}
           </div>
@@ -184,7 +262,11 @@ const DeviceListPage = async ({
       </div>
 
       <div className="">
-        <Table columns={columns} renderRow={renderRow} data={data} />
+        <Table 
+          columns={columns} 
+          renderRow={(item) => renderRow(item, currentUserRole, currentUserId)} 
+          data={data} 
+        />
       </div>
 
       <Pagination page={p} count={count} />

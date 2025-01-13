@@ -78,6 +78,7 @@ const SingleUserPage = async ({
                       institutionId: user.institutionId,
                       role: user.role,
                     }}
+                    currentUserRole={currentUserRole}  // Bunu ekleyelim
                   />
                 )}
               </div>

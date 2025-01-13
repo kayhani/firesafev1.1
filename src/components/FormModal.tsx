@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { UserRole } from "@prisma/client";
 
 // Dinamik form importları
 const UserForm = dynamic(() => import("./forms/UserForm"), {
@@ -61,9 +62,9 @@ const OfferRequestForm = dynamic(() => import("./forms/OfferRequestForm"), {
 
 // Form bileşenlerini mapping objesi
 const forms: {
-  [key: string]: (type: "create" | "update", data?: any) => JSX.Element;
+  [key: string]: (type: "create" | "update", data?: any, currentUserRole?: UserRole) => JSX.Element;
 } = {
-  user: (type, data) => <UserForm type={type} data={data} />,
+  user: (type, data, currentUserRole) => <UserForm type={type} data={data} currentUserRole={currentUserRole} />,
   customer: (type, data) => <CustomerForm type={type} data={data} />,
   provider: (type, data) => <ProviderForm type={type} data={data} />,
   device: (type, data) => <DeviceForm type={type} data={data} />,
@@ -103,11 +104,12 @@ interface FormModalProps {
   type: "create" | "update" | "delete";
   data?: any;
   id?: string;
+  currentUserRole?: UserRole;
   children?: React.ReactNode; // Bu satırı ekleyin
 
 }
 
-const FormModal = ({ table, type, data, id }: FormModalProps) => {
+const FormModal = ({ table, type, data, id, currentUserRole  }: FormModalProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -283,9 +285,9 @@ const FormModal = ({ table, type, data, id }: FormModalProps) => {
     if (type === "delete" && id) {
       return <DeleteForm />;
     }
-
+  
     if (type === "create" || type === "update") {
-      return forms[table](type, data);
+      return forms[table](type, data, currentUserRole); // şimdi currentUserRole'e erişebiliriz
     }
 
     return <p className="text-center text-red-500">Form bulunamadı!</p>;
