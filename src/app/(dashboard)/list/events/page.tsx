@@ -5,12 +5,12 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { 
-  Appointments, 
-  Institutions, 
-  User, 
+import {
+  Appointments,
+  Institutions,
+  User,
   Prisma,
-  UserRole 
+  UserRole
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -137,7 +137,7 @@ const EventListPage = async ({
 }) => {
   const session = await auth();
   const currentUserRole = session?.user?.role as UserRole;
-  
+
   const currentUser = session?.user?.email ? await prisma.user.findUnique({
     where: { email: session.user.email }
   }) : null;
@@ -178,20 +178,20 @@ const EventListPage = async ({
       <td>
         <div className="flex items-center gap-2">
           {canViewAppointment(
-            userRole, 
-            item.creatorId, 
-            item.creatorInsId, 
-            item.recipientId, 
+            userRole,
+            item.creatorId,
+            item.creatorInsId,
+            item.recipientId,
             item.recipientInsId,
             userId,
             userInstitutionId
           ) && (
-            <Link href={`/list/events/${item.id}`}>
-              <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
-                <Image src="/view.png" alt="" width={24} height={24} />
-              </button>
-            </Link>
-          )}
+              <Link href={`/list/events/${item.id}`}>
+                <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
+                  <Image src="/view.png" alt="" width={24} height={24} />
+                </button>
+              </Link>
+            )}
           {canManageAppointment(
             userRole,
             item.creatorId,
@@ -199,8 +199,8 @@ const EventListPage = async ({
             userId,
             userInstitutionId
           ) && (
-            <FormModal table="event" type="delete" id={item.id} />
-          )}
+              <FormModal table="event" type="delete" id={item.id} />
+            )}
         </div>
       </td>
     </tr>
@@ -244,6 +244,16 @@ const EventListPage = async ({
               query.creatorInsId = creatorInstId;
             }
             break;
+
+          case "institutionFilter":
+            const institutionId = value;
+            if (institutionId) {
+              query.OR = [
+                { recipientInsId: institutionId },
+                { creatorInsId: institutionId }
+              ];
+            }
+            break;
           case "search":
             query.tittle = { contains: value, mode: "insensitive" };
             break;
@@ -271,10 +281,10 @@ const EventListPage = async ({
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       <div className="flex item-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">
-          {currentUserRole === UserRole.ADMIN 
+          {currentUserRole === UserRole.ADMIN
             ? 'Tüm Randevular'
             : currentUserRole.startsWith('MUSTERI')
-              ? currentUserRole === UserRole.MUSTERI_SEVIYE1 
+              ? currentUserRole === UserRole.MUSTERI_SEVIYE1
                 ? 'Kurumunuzun Randevuları'
                 : 'Randevularınız'
               : currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1
@@ -301,10 +311,10 @@ const EventListPage = async ({
       </div>
 
       <div className="">
-        <Table 
-          columns={columns} 
-          renderRow={(item) => renderRow(item, currentUserRole, currentUserId, currentUserInstitutionId)} 
-          data={data} 
+        <Table
+          columns={columns}
+          renderRow={(item) => renderRow(item, currentUserRole, currentUserId, currentUserInstitutionId)}
+          data={data}
         />
       </div>
 

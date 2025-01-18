@@ -18,7 +18,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 
-type MaintenanceList = MaintenanceCards & { 
+type MaintenanceList = MaintenanceCards & {
   device: Devices;
   deviceType: DeviceTypes;
   deviceFeature: DeviceFeatures;
@@ -71,15 +71,15 @@ const canViewMaintenance = (
 
   // Müşteri rolleri sadece kendi cihazlarının bakımlarını görebilir
   if (
-    (userRole === UserRole.MUSTERI_SEVIYE1 || 
-     userRole === UserRole.MUSTERI_SEVIYE2) &&
+    (userRole === UserRole.MUSTERI_SEVIYE1 ||
+      userRole === UserRole.MUSTERI_SEVIYE2) &&
     currentUserInstitutionId === maintenanceCustomerInsId
   ) return true;
 
   // Hizmet sağlayıcı rolleri sadece kendi yaptıkları bakımları görebilir
   if (
-    (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 || 
-     userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) &&
+    (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 ||
+      userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) &&
     currentUserInstitutionId === maintenanceProviderInsId
   ) return true;
 
@@ -97,8 +97,8 @@ const canManageMaintenance = (
 
   // Hizmet sağlayıcı rolleri kendi yaptıkları bakımları yönetebilir
   if (
-    (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 || 
-     userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) &&
+    (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 ||
+      userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) &&
     currentUserInstitutionId === maintenanceProviderInsId
   ) return true;
 
@@ -121,7 +121,7 @@ const MaintenanceListPage = async ({
 }) => {
   const session = await auth();
   const currentUserRole = session?.user?.role as UserRole;
-  
+
   const currentUser = session?.user?.email ? await prisma.user.findUnique({
     where: { email: session.user.email }
   }) : null;
@@ -182,12 +182,12 @@ const MaintenanceListPage = async ({
 
   // Role göre filtreleme
   if (currentUserRole !== UserRole.ADMIN && currentUserInstitutionId) {
-    if (currentUserRole === UserRole.MUSTERI_SEVIYE1 || 
-        currentUserRole === UserRole.MUSTERI_SEVIYE2) {
+    if (currentUserRole === UserRole.MUSTERI_SEVIYE1 ||
+      currentUserRole === UserRole.MUSTERI_SEVIYE2) {
       // Müşteriler sadece kendi cihazlarının bakımlarını görebilir
       query.customerInsId = currentUserInstitutionId;
-    } else if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 || 
-               currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
+    } else if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 ||
+      currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
       // Hizmet sağlayıcılar sadece kendi yaptıkları bakımları görebilir
       query.providerInsId = currentUserInstitutionId;
     }
@@ -227,6 +227,16 @@ const MaintenanceListPage = async ({
               query.deviceId = deviceId;
             }
             break;
+          case "institutionFilter":
+            const institutionId = value;
+            if (institutionId) {
+              query.OR = [
+                { customerInsId: institutionId },
+                { providerInsId: institutionId }
+              ];
+            }
+            break;
+
           case "search":
             query.details = { contains: value, mode: "insensitive" };
             break;
@@ -257,9 +267,9 @@ const MaintenanceListPage = async ({
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       <div className="flex item-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">
-          {currentUserRole === UserRole.ADMIN 
+          {currentUserRole === UserRole.ADMIN
             ? 'Tüm Bakımlar'
-            : currentUserRole.startsWith('MUSTERI') 
+            : currentUserRole.startsWith('MUSTERI')
               ? 'Cihazlarınıza Yapılan Bakımlar'
               : 'Yaptığınız Bakımlar'}
         </h1>
@@ -282,10 +292,10 @@ const MaintenanceListPage = async ({
       </div>
 
       <div className="">
-        <Table 
-          columns={columns} 
-          renderRow={(item) => renderRow(item, currentUserRole, currentUserInstitutionId)} 
-          data={data} 
+        <Table
+          columns={columns}
+          renderRow={(item) => renderRow(item, currentUserRole, currentUserInstitutionId)}
+          data={data}
         />
       </div>
 

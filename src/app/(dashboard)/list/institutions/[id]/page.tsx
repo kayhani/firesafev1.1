@@ -126,42 +126,50 @@ const SingleInstitutionPage = async ({
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
         <div className="bg-white p-4 rounded-md">
           <h1 className="text-xl font-semibold">Kısayollar</h1>
+          <br></br>
+          <h1 className="text-md font-semibold">Kurumun</h1>
           <div className="mt-4 flex gap-4 flex-wrap text-xs text-black-500">
+            {/* Personel listesi */}
             <Link
               className="p-3 rounded-md bg-lamaSkyLight"
               href={`/list/users?institutionId=${inst.id}`}
             >
-              Personellerim
+              Personelleri
             </Link>
+            {/* Teklif listesi - OR filtrelemesi için özel parametre */}
             <Link
               className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/api/offers?recipientInstId=${inst.id}&creatorInstId=${inst.id}`}
+              href={`/list/offers?institutionFilter=${inst.id}`}
             >
-              Tekliflerim
+              Teklifleri
             </Link>
+            {/* Cihaz listesi - OR filtrelemesi için özel parametre */}
             <Link
               className="p-3 rounded-md bg-lamaPurpleLight"
-              href={`/list/devices?ownerInstId=${inst.id}`}
+              href={`/list/devices?institutionFilter=${inst.id}`}
             >
-              Cihazlarım
+              Cihazları
             </Link>
+            {/* Bakım listesi - OR filtrelemesi için özel parametre */}
             <Link
               className="p-3 rounded-md bg-lamaPurple"
-              href={`/list/maintenances?customerInsId=${inst.id}`}
+              href={`/list/maintenances?institutionFilter=${inst.id}`}
             >
-              Bakımlarım
+              Bakımları
             </Link>
+            {/* Bildirim listesi */}
             <Link
               className="p-3 rounded-md bg-lamaYellowLight"
               href={`/list/notifications?recipientInsId=${inst.id}`}
             >
-              Bildirimlerim
+              Bildirimleri
             </Link>
+            {/* Randevu listesi - OR filtrelemesi için özel parametre */}
             <Link
               className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/list/events?recipientInsId=${inst.id}`}
+              href={`/list/events?institutionFilter=${inst.id}`}
             >
-              Randevularım
+              Randevuları
             </Link>
           </div>
         </div>

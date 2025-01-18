@@ -56,7 +56,7 @@ const columns = [
 
 const canViewDevices = (
   userRole: UserRole,
-  deviceOwnerId: string | null, 
+  deviceOwnerId: string | null,
   deviceProviderId: string | null,
   currentUserId: string | null | undefined
 ) => {
@@ -64,8 +64,8 @@ const canViewDevices = (
 
   // Müşteri rolündeki kullanıcılar sadece sahip oldukları cihazları görebilir
   if (
-    (userRole === UserRole.MUSTERI_SEVIYE1 || 
-     userRole === UserRole.MUSTERI_SEVIYE2) &&
+    (userRole === UserRole.MUSTERI_SEVIYE1 ||
+      userRole === UserRole.MUSTERI_SEVIYE2) &&
     deviceOwnerId === currentUserId
   ) {
     return true;
@@ -73,8 +73,8 @@ const canViewDevices = (
 
   // Hizmet sağlayıcı rolündeki kullanıcılar sadece hizmet verdikleri cihazları görebilir
   if (
-    (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 || 
-     userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) &&
+    (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 ||
+      userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) &&
     deviceProviderId === currentUserId
   ) {
     return true;
@@ -116,7 +116,7 @@ const DeviceListPage = async ({
 }) => {
   const session = await auth();
   const currentUserRole = session?.user?.role as UserRole;
-  
+
   const currentUser = session?.user?.email ? await prisma.user.findUnique({
     where: { email: session.user.email }
   }) : null;
@@ -176,12 +176,12 @@ const DeviceListPage = async ({
 
   // ADMIN değilse, role göre filtreleme yap
   if (currentUserRole !== UserRole.ADMIN && currentUserId) {
-    if (currentUserRole === UserRole.MUSTERI_SEVIYE1 || 
-        currentUserRole === UserRole.MUSTERI_SEVIYE2) {
+    if (currentUserRole === UserRole.MUSTERI_SEVIYE1 ||
+      currentUserRole === UserRole.MUSTERI_SEVIYE2) {
       // Müşteri rolündeki kullanıcılar sadece sahip oldukları cihazları görebilir
       query.ownerId = currentUserId;
-    } else if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 || 
-               currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
+    } else if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 ||
+      currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
       // Hizmet sağlayıcı rolündeki kullanıcılar sadece hizmet verdikleri cihazları görebilir
       query.providerId = currentUserId;
     }
@@ -207,6 +207,16 @@ const DeviceListPage = async ({
             const ownerInstId = value;
             if (!ownerInstId) {
               query.ownerInstId = ownerInstId;
+            }
+            break;
+
+          case "institutionFilter":
+            const institutionId = value;
+            if (institutionId) {
+              query.OR = [
+                { ownerInstId: institutionId },
+                { providerInstId: institutionId }
+              ];
             }
             break;
           case "search":
@@ -237,9 +247,9 @@ const DeviceListPage = async ({
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       <div className="flex item-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">
-          {currentUserRole === UserRole.ADMIN 
+          {currentUserRole === UserRole.ADMIN
             ? 'Tüm Yangın Güvenlik Önlemleri'
-            : currentUserRole.startsWith('MUSTERI') 
+            : currentUserRole.startsWith('MUSTERI')
               ? 'Sahip Olduğunuz Yangın Güvenlik Önlemleri'
               : 'Hizmet Verdiğiniz Yangın Güvenlik Önlemleri'}
         </h1>
@@ -262,10 +272,10 @@ const DeviceListPage = async ({
       </div>
 
       <div className="">
-        <Table 
-          columns={columns} 
-          renderRow={(item) => renderRow(item, currentUserRole, currentUserId)} 
-          data={data} 
+        <Table
+          columns={columns}
+          renderRow={(item) => renderRow(item, currentUserRole, currentUserId)}
+          data={data}
         />
       </div>
 

@@ -231,6 +231,16 @@ const OfferListPage = async ({
              query.creatorInsId = creatorInstId;
            }
            break;
+           // Yeni case burada eklenecek
+        case "institutionFilter":
+          const institutionId = value;
+          if (institutionId) {
+            query.OR = [
+              { recipientInsId: institutionId },
+              { creatorInsId: institutionId }
+            ];
+          }
+          break;
          case "search":
            query.details = { contains: value, mode: "insensitive" };
            break;

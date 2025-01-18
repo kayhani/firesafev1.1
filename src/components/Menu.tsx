@@ -49,7 +49,7 @@ const menuItems = [
       },
       {
         icon: "/user.png",
-        label: "Şirketler",
+        label: "Kurumlar",
         href: "/list/institutions",
         visible: [
           "admin",
