@@ -215,6 +215,43 @@ const SingleNotificationPage = async ({
       </div>
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
       </div>
+
+      {/* SAĞ TARAF - Kısayollar */}
+      <div className="w-full xl:w-1/3">
+        <div className="bg-white p-4 rounded-md">
+          <h1 className="text-xl font-semibold mb-4">Kısayollar</h1>
+          <div className="flex flex-col gap-3">
+            {/* Bildirim alan kişinin profili */}
+            <Link
+              href={`/list/users/${notification.recipientId}`}
+              className="flex items-center gap-2 p-3 rounded-md bg-lamaSkyLight hover:bg-lamaSky transition-colors"
+            >
+              <Image src="/user.png" alt="" width={16} height={16} />
+              <span className="text-sm">Bildirim Alan Kişi Profili</span>
+            </Link>
+
+            {/* Bildirim alan kurumun profili */}
+            <Link
+              href={`/list/institutions/${notification.recipientInsId}`}
+              className="flex items-center gap-2 p-3 rounded-md bg-lamaPurpleLight hover:bg-lamaPurple transition-colors"
+            >
+              <Image src="/company.png" alt="" width={16} height={16} />
+              <span className="text-sm">Bildirim Alan Kurum Profili</span>
+            </Link>
+
+            {/* İlgili cihazın detayları - Eğer cihaz bağlantısı varsa */}
+            {notification.deviceId && (
+              <Link
+                href={`/list/devices/${notification.deviceId}`}
+                className="flex items-center gap-2 p-3 rounded-md bg-lamaYellow hover:bg-lamaYellowDark transition-colors"
+              >
+                <Image src="/device.png" alt="" width={16} height={16} />
+                <span className="text-sm">İlgili Cihaz Detayları</span>
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

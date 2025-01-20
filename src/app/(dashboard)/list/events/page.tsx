@@ -230,21 +230,14 @@ const EventListPage = async ({
 
   if (queryParams) {
     for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined && currentUserRole === UserRole.ADMIN) {
+      if (value !== undefined) {
         switch (key) {
           case "recipientInsId":
-            const recipientInstId = value;
-            if (!recipientInstId) {
-              query.recipientInsId = recipientInstId;
-            }
+            query.recipientInsId = value;
             break;
           case "creatorInstId":
-            const creatorInstId = value;
-            if (!creatorInstId) {
-              query.creatorInsId = creatorInstId;
-            }
+            query.creatorInsId = value;
             break;
-
           case "institutionFilter":
             const institutionId = value;
             if (institutionId) {

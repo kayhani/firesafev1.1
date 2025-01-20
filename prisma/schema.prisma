@@ -185,6 +185,7 @@ model Devices {
   expirationDate  DateTime
   nextControlDate DateTime
   location        String
+  location1       String
   photo           String?
   currentStatus   DeviceStatus
 
@@ -336,6 +337,9 @@ model OfferCards {
   recipientInsId String
   recipientIns   Institutions @relation("RecipientIns", fields: [recipientInsId], references: [id]) // İlişki Tanımı
 
+  requestId String?
+  request OfferRequests? @relation(fields: [requestId], references: [id])
+
   details String
 
   OfferSub OfferSub[]
@@ -372,6 +376,8 @@ model OfferRequests {
   details String
 
   RequestSub RequestSub[]
+
+  OfferCards OfferCards[]
 }
 
 model RequestSub {

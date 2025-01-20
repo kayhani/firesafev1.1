@@ -139,7 +139,7 @@ const menuItems = [
       {
         icon: "/profile.png",
         label: "Profil",
-        href: "/profile",
+        href: "/list/users",
         visible: [
           "admin",
           "provider",

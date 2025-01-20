@@ -127,6 +127,7 @@ CREATE TABLE "Devices" (
     "expirationDate" TIMESTAMP(3) NOT NULL,
     "nextControlDate" TIMESTAMP(3) NOT NULL,
     "location" TEXT NOT NULL,
+    "location1" TEXT NOT NULL,
     "photo" TEXT,
     "currentStatus" "DeviceStatus" NOT NULL,
     "typeId" TEXT NOT NULL,
@@ -216,6 +217,7 @@ CREATE TABLE "OfferCards" (
     "creatorInsId" TEXT NOT NULL,
     "recipientId" TEXT NOT NULL,
     "recipientInsId" TEXT NOT NULL,
+    "requestId" TEXT,
     "details" TEXT NOT NULL,
 
     CONSTRAINT "OfferCards_pkey" PRIMARY KEY ("id")
@@ -496,6 +498,9 @@ ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_recipientId_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_recipientInsId_fkey" FOREIGN KEY ("recipientInsId") REFERENCES "Institutions"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OfferCards" ADD CONSTRAINT "OfferCards_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "OfferRequests"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "OfferSub" ADD CONSTRAINT "OfferSub_offerCardId_fkey" FOREIGN KEY ("offerCardId") REFERENCES "OfferCards"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

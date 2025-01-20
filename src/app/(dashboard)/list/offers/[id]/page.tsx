@@ -271,6 +271,22 @@ const SingleOfferPage = async ({
             ))}
           </div>
         </div>
+
+        {offer.requestId && (
+          <div className="bg-white p-4 rounded-md mt-4">
+            <h2 className="text-xl font-semibold mb-4">Kısayollar</h2>
+            <div className="flex gap-4 flex-wrap text-xs text-black-500">
+              <Link
+                className="p-3 rounded-md bg-lamaPurpleLight"
+                href={`/list/offerRequests/${offer.requestId}`}
+                //href={`/list/notifications?recipientId=${user.id}`}
+              >
+                İlgili Teklif Talebi
+              </Link>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

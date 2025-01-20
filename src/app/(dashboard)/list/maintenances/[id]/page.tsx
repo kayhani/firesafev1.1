@@ -229,6 +229,30 @@ const SingleMaintenancePage = async ({
             </div>
           ))}
         </div>
+
+        <div className="bg-white p-4 rounded-md">
+          <h1 className="text-xl font-semibold mb-4">Kısayollar</h1>
+          <div className="flex flex-col gap-3">
+            {/* Cihaz detaylarına git */}
+            <Link
+              href={`/list/devices/${maintenance.deviceId}`}
+              className="flex items-center gap-2 p-3 rounded-md bg-lamaSkyLight hover:bg-lamaSky transition-colors"
+            >
+              <Image src="/view.png" alt="" width={16} height={16} />
+              <span className="text-sm">Cihaz Detayları</span>
+            </Link>
+
+            {/* Cihazın diğer bakımları */}
+            <Link
+              href={`/list/maintenances?deviceId=${maintenance.deviceId}`}
+              className="flex items-center gap-2 p-3 rounded-md bg-lamaPurpleLight hover:bg-lamaPurple transition-colors"
+            >
+              <Image src="/maintenance.png" alt="" width={16} height={16} />
+              <span className="text-sm">Cihazın Diğer Bakımları</span>
+            </Link>
+          </div>
+        </div>
+
       </div>
     </div>
   );

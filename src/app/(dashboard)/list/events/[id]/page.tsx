@@ -3,11 +3,11 @@ import BigCalendar from "@/components/BigCalendar";
 import FormModal from "@/components/FormModal";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
-import { 
-  Appointments, 
-  Institutions, 
+import {
+  Appointments,
+  Institutions,
   User,
-  UserRole 
+  UserRole
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -227,6 +227,42 @@ const SingleEventPage = async ({
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+
+      {/* SAĞ TARAF - Kısayollar */}
+      <div className="w-full xl:w-1/3">
+        <div className="bg-white p-4 rounded-md">
+          <h1 className="text-xl font-semibold mb-4">Kısayollar</h1>
+          <div className="flex flex-col gap-3">
+            {/* Randevuyu alan kişinin profili */}
+            <Link
+              href={`/list/users/${event.recipientId}`}
+              className="flex items-center gap-2 p-3 rounded-md bg-lamaSkyLight hover:bg-lamaSky transition-colors"
+            >
+              <Image src="/user.png" alt="" width={16} height={16} />
+              <span className="text-sm">Randevu Alan Kişi Profili</span>
+            </Link>
+
+            {/* Randevuyu alan kurumun profili */}
+            <Link
+              href={`/list/institutions/${event.recipientInsId}`}
+              className="flex items-center gap-2 p-3 rounded-md bg-lamaPurpleLight hover:bg-lamaPurple transition-colors"
+            >
+              <Image src="/company.png" alt="" width={16} height={16} />
+              <span className="text-sm">Randevu Alan Kurum Profili</span>
+            </Link>
+
+            {/* Aynı kurumlar arasındaki diğer randevular */}
+            <Link
+              href={`/list/events?creatorInstId=${event.creatorInsId}&recipientInstId=${event.recipientInsId}`}
+              className="flex items-center gap-2 p-3 rounded-md bg-lamaYellow hover:bg-lamaYellowDark transition-colors"
+            >
+              <Image src="/calendar.png" alt="" width={16} height={16} />
+              <span className="text-sm">Kurumlar Arası Diğer Randevular</span>
+            </Link>
           </div>
         </div>
       </div>

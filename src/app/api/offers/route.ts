@@ -89,7 +89,7 @@ export async function POST(request: Request) {
             recipientInsId: body.recipientInsId,
             notificationDate: new Date(),
             isRead: 'Okunmadi',
-            typeId: 'cm51zwlwg00005wlzl7ppuxyr'
+            typeId: 'cm636qhdi0004rfy8v4clkz1j'
           }
         }).then(result => {
           console.log('13. Bildirim oluşturuldu:', result);

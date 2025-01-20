@@ -107,6 +107,7 @@ export async function PUT(
             expirationDate: expirationDate,
             nextControlDate: nextControlDate,
             location: formData.get('location') as string,
+            location1: formData.get('location1') as string,
             currentStatus: formData.get('currentStatus') as "Aktif" | "Pasif",
             ownerId: formData.get('ownerId') as string,
             ownerInstId: formData.get('ownerInstId') as string,

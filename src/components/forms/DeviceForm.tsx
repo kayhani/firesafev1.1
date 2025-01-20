@@ -35,32 +35,33 @@ const schema = z.object({
   // Cihaz Sahibi Bilgileri
   ownerId: z.string().min(1, { message: "Cihaz sahibi ID'si zorunludur" }),
   ownerInstId: z.string().min(1, { message: "Sahip kurum seçimi zorunludur" }),
-  
+
   // Temel Cihaz Bilgileri
   serialNumber: z.string()
     .min(3, { message: "Seri No min 3 karakter uzunluğunda olmalı!" })
     .max(20, { message: "Seri No maks 20 karakter uzunluğunda olmalı!" }),
   typeId: z.string().min(1, { message: "Cihaz tipi seçimi zorunludur" }),
   featureId: z.string().min(1, { message: "Cihaz özelliği seçimi zorunludur" }),
-  
+
   // Tarih Bilgileri
   productionDate: z.string().min(1, { message: "Üretim tarihi zorunludur" }),
   lastControlDate: z.string().min(1, { message: "Son kontrol tarihi zorunludur" }),
   expirationDate: z.string().min(1, { message: "Son kullanma tarihi zorunludur" }),
   nextControlDate: z.string().min(1, { message: "Sonraki kontrol tarihi zorunludur" }),
-  
+
   // Konum ve Durum
   location: z.string().min(1, { message: "Konum zorunludur" }),
+  location1: z.string().optional(), // Opsiyonel alan
   currentStatus: z.enum(["Aktif", "Pasif"]),
-  
+
   // Hizmet Sağlayıcı Bilgileri
   providerInstId: z.string().min(1, { message: "Sağlayıcı kurum seçimi zorunludur" }),
   providerId: z.string().min(1, { message: "Hizmet sağlayıcı seçimi zorunludur" }),
-  
+
   // ISG ve Detay Bilgileri
   isgMemberId: z.string().min(1, { message: "ISG üyesi seçimi zorunludur" }),
   details: z.string().min(1, { message: "Detaylar zorunludur" }),
-  
+
   // Opsiyonel Alanlar
   photo: z.any().optional()
 });
@@ -137,7 +138,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
       try {
         setLoading(true);
         const submitData = new FormData();
-
+  
         // Form verilerini FormData'ya dönüştür
         Object.entries(formData).forEach(([key, value]) => {
           if (value instanceof File) {
@@ -146,22 +147,21 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
             submitData.append(key, String(value));
           }
         });
-
+  
         // API endpoint'i
         const endpoint = type === "create" ? '/api/devices' : `/api/devices/${data?.id}`;
         const method = type === "create" ? 'POST' : 'PUT';
-
+  
         const response = await fetch(endpoint, {
           method,
           body: submitData,
         });
-        
-
+  
         if (!response.ok) {
           const errorData = await response.text();
           throw new Error(errorData || 'İşlem başarısız oldu');
         }
-
+  
         await response.json();
         router.refresh();
         router.push('/list/devices');
@@ -173,7 +173,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
         setLoading(false);
       }
     });
-
+  
     // Toast bildirimleri
     toast.promise(submitPromise, {
       loading: type === "create" ? 'Cihaz kaydediliyor...' : 'Cihaz güncelleniyor...',
@@ -187,7 +187,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Yangın Güvenlik Tedbiri Oluştur" : "Cihaz Düzenle"}
       </h1>
-  
+
       {/* Cihaz Sahibi Bilgileri */}
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Cihaz Sahibi Bilgileri</h2>
@@ -198,7 +198,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
             register={register}
             error={errors?.ownerId}
           />
-  
+
           {ownerInfo && (
             <>
               <div className="flex flex-col gap-2">
@@ -223,7 +223,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
           )}
         </div>
       </div>
-  
+
       {/* Temel Cihaz Bilgileri */}
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Temel Cihaz Bilgileri</h2>
@@ -234,18 +234,18 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
             register={register}
             error={errors?.serialNumber}
           />
-  
+
           <DeviceTypeSelect
             register={register}
             error={errors.typeId}
           />
-  
+
           <DeviceFeatureSelect
             register={register}
             error={errors.featureId}
             typeId={selectedTypeId}
           />
-  
+
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-500">Durum</label>
             <select
@@ -261,7 +261,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
           </div>
         </div>
       </div>
-  
+
       {/* Tarih Bilgileri */}
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Tarih Bilgileri</h2>
@@ -273,7 +273,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
             register={register}
             error={errors?.productionDate}
           />
-  
+
           <InputField
             label="Son Kontrol Tarihi"
             name="lastControlDate"
@@ -281,7 +281,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
             register={register}
             error={errors?.lastControlDate}
           />
-  
+
           <InputField
             label="Son Kullanma Tarihi"
             name="expirationDate"
@@ -289,7 +289,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
             register={register}
             error={errors?.expirationDate}
           />
-  
+
           <InputField
             label="Sonraki Kontrol Tarihi"
             name="nextControlDate"
@@ -299,7 +299,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
           />
         </div>
       </div>
-  
+
       {/* Konum Bilgileri */}
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Konum Bilgileri</h2>
@@ -310,21 +310,28 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
             register={register}
             error={errors?.location}
           />
+
+          <InputField
+            label="Bölüm"
+            name="location1"
+            register={register}
+            error={errors?.location1}
+          />
         </div>
       </div>
-  
+
       {/* Hizmet Sağlayıcı Bilgileri */}
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Hizmet Sağlayıcı Bilgileri</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <InstitutionSelect
-  label="Sağlayıcı Kurum"
-  register={register}
-  name="providerInstId"
-  error={errors.providerInstId}
-  defaultValue={data?.providerInstId} // Bunu ekleyelim
-/>
-  
+          <InstitutionSelect
+            label="Sağlayıcı Kurum"
+            register={register}
+            name="providerInstId"
+            error={errors.providerInstId}
+            defaultValue={data?.providerInstId} // Bunu ekleyelim
+          />
+
           <UserSelect
             label="Hizmet Sağlayıcı"
             name="providerId"
@@ -334,7 +341,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
           />
         </div>
       </div>
-  
+
       {/* ISG Bilgileri */}
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">ISG Bilgileri</h2>
@@ -345,7 +352,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
           />
         </div>
       </div>
-  
+
       {/* Detay Bilgileri */}
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Detay Bilgileri</h2>
@@ -360,7 +367,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
               <p className="text-xs text-red-400">{errors.details.message}</p>
             )}
           </div>
-  
+
           {/* Fotoğraf Yükleme */}
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer" htmlFor="photo">
@@ -377,7 +384,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
           </div>
         </div>
       </div>
-  
+
       {/* Submit Button */}
       <button
         type="submit"

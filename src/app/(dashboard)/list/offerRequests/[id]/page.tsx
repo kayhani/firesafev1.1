@@ -2,15 +2,16 @@ import Announcements from "@/components/Announcements";
 import FormModal from "@/components/FormModal";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { 
-  OfferRequests, 
-  RequestSub, 
-  Services, 
-  User, 
+import {
+  OfferRequests,
+  RequestSub,
+  Services,
+  User,
   Institutions,
-  UserRole 
+  UserRole
 } from "@prisma/client";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type RequestWithSubs = OfferRequests & {
@@ -189,7 +190,33 @@ const SingleOfferRequestPage = async ({
         </div>
       </div>
 
-      <div className="w-full xl:w-1/3">
+      <div className="w-full xl:w-1/3 flex flex-col gap-4">
+        {/* Kısayollar Bölümü */}
+        <div className="bg-white p-4 rounded-md">
+          <h1 className="text-xl font-semibold">Kısayollar</h1>
+          <div className="mt-4 flex gap-4 flex-wrap text-xs text-black-500">
+            <Link
+              className="p-3 rounded-md bg-lamaSkyLight"
+              href={`/list/offers?requestId=${request.id}`} // requestId parametresi eklendi
+            >
+              Talebe Verilen Teklifler
+            </Link>
+            {/* <Link
+              className="p-3 rounded-md bg-lamaPurpleLight"
+              href={`/list/offers?creatorInsId=${request.creatorInsId}`}
+            >
+              Kurumun Diğer Talepleri
+            </Link>
+            <Link
+              className="p-3 rounded-md bg-lamaPurple"
+              href={`/list/offers?creatorId=${request.creatorId}`}
+            >
+              Kullanıcının Diğer Talepleri
+            </Link> */}
+          </div>
+        </div>
+
+        {/* Alt Kalemler Bölümü */}
         <div className="bg-white p-4 rounded-md">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Alt Kalemler</h2>
@@ -222,6 +249,8 @@ const SingleOfferRequestPage = async ({
             ))}
           </div>
         </div>
+
+        <Announcements />
       </div>
     </div>
   );
