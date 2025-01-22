@@ -265,7 +265,12 @@ const DeviceListPage = async ({
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
             {canCreateDevice(currentUserRole) && (
-              <FormModal table="device" type="create" />
+              <FormModal
+                table="device"
+                type="create"
+                currentUserRole={currentUserRole}
+                currentUserId={currentUserId || ''} // currentUserId ekleyelim
+              />
             )}
           </div>
         </div>

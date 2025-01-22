@@ -1,15 +1,3 @@
-// Bu teklif formu oldukça kapsamlı. İşte detaylı dökümü:
-// API Endpoints:
-// /api/users/detail/${creatorId} - Teklifi oluşturan kişinin detaylarını getiren endpoint
-// /api/users/detail/${recipientId} - Alıcı kişinin detaylarını getiren endpoint
-// /api/payment-terms - Ödeme koşullarını getiren endpoint
-// /api/offers - Teklif oluşturma endpoint'i (POST)
-// /api/offers/${id} - Teklif güncelleme endpoint'i (PUT)
-
-// Özel Componentler:
-// InputField - Form inputları için temel input bileşeni
-// ServiceSelect - Hizmet seçimi için dropdown bileşeni
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,9 +9,6 @@ import toast from 'react-hot-toast';
 import InputField from "../InputField";
 import ServiceSelect from "@/components/ServiceSelect";
 
-
-
-// Tip tanımlamaları
 type OfferSubInput = {
   serviceId: string;
   unitPrice: string;
@@ -32,22 +17,17 @@ type OfferSubInput = {
   isFromRequest?: boolean;
 };
 
-
-
-// PaymentTerm tipini tanımlayalım
 interface PaymentTerm {
   id: string;
   name: string;
 }
 
-// Form validation şeması
 const offerSubSchema = z.object({
   serviceId: z.string().min(1, { message: "Hizmet seçimi zorunludur" }),
   unitPrice: z.string().min(1, { message: "Birim fiyat zorunludur" }),
   size: z.string().min(1, { message: "Miktar zorunludur" }),
   detail: z.string().optional(),
-  isFromRequest: z.boolean().optional(), // isFromRequest alanını ekleyelim
-
+  isFromRequest: z.boolean().optional(),
 });
 
 const schema = z.object({
@@ -62,7 +42,8 @@ const schema = z.object({
     .min(10, { message: "Detay en az 10 karakter olmalıdır" })
     .max(500, { message: "Detay en fazla 500 karakter olabilir" }),
   status: z.enum(["Onaylandi", "Red", "Beklemede"]),
-  offerSub: z.array(offerSubSchema).min(1, { message: "En az bir hizmet kalemi eklemelisiniz" })
+  offerSub: z.array(offerSubSchema).min(1, { message: "En az bir hizmet kalemi eklemelisiniz" }),
+  requestId: z.string().optional(), // Bunu eklemeliyiz
 });
 
 type Inputs = z.infer<typeof schema>;
@@ -70,9 +51,10 @@ type Inputs = z.infer<typeof schema>;
 interface OfferFormProps {
   type: "create" | "update";
   data?: any;
+  currentUserId: string; // Yeni eklenen prop
 }
 
-const OfferForm = ({ type, data }: OfferFormProps) => {
+const OfferForm = ({ type, data, currentUserId }: OfferFormProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [creatorInfo, setCreatorInfo] = useState<any>(null);
@@ -92,8 +74,9 @@ const OfferForm = ({ type, data }: OfferFormProps) => {
     resolver: zodResolver(schema),
     defaultValues: {
       ...data,
+      requestId: data?.requestId, // Bunu eklemeliyiz
+      creatorId: currentUserId, // currentUserId'yi ekledik
       status: type === "create" ? "Beklemede" : (data?.status || "Beklemede"),
-      // Eğer data.offerSub varsa onu kullan, yoksa boş bir array oluştur
       offerSub: data?.offerSub || [{
         serviceId: '',
         unitPrice: '',
@@ -111,7 +94,6 @@ const OfferForm = ({ type, data }: OfferFormProps) => {
   const selectedCreatorId = watch("creatorId");
   const selectedRecipientId = watch("recipientId");
 
-  // Ödeme koşullarını getiren fonksiyon
   const fetchPaymentTerms = async () => {
     try {
       setIsLoadingPaymentTerms(true);
@@ -158,39 +140,51 @@ const OfferForm = ({ type, data }: OfferFormProps) => {
   };
 
   useEffect(() => {
-    if (selectedCreatorId) fetchCreatorInfo(selectedCreatorId);
-  }, [selectedCreatorId]);
-
-  useEffect(() => {
-    if (selectedRecipientId) fetchRecipientInfo(selectedRecipientId);
-  }, [selectedRecipientId]);
-
-  useEffect(() => {
     if (data && type === "update") {
-      // Tarihleri doğru formata çeviriyoruz
       const offerDate = data.offerDate ? new Date(data.offerDate).toISOString().slice(0, 16) : '';
       const validityDate = data.validityDate ? new Date(data.validityDate).toISOString().slice(0, 16) : '';
-      
+
       reset({
         ...data,
+        requestId: data.requestId, // Bunu eklemeliyiz
         offerDate,
         validityDate,
         paymentTermId: data.paymentTermId,
         offerSub: data.OfferSub?.map((sub: any) => ({
-          serviceId: sub.servideId, // API'deki field adı 'servideId' olduğu için düzeltiyoruz
+          serviceId: sub.servideId,
           unitPrice: sub.unitPrice.toString(),
           size: sub.size.toString(),
           detail: sub.detail || '',
           isFromRequest: sub.isFromRequest || false
         }))
       });
-  
-      if (data.creatorId) fetchCreatorInfo(data.creatorId);
-      if (data.recipientId) fetchRecipientInfo(data.recipientId);
+
+      if (data.creatorId) {
+        fetchCreatorInfo(data.creatorId);
+      }
+      if (data.recipientId) {
+        fetchRecipientInfo(data.recipientId);
+      }
+    } else {
+      // Create modunda currentUserId'yi set edip bilgileri getir
+      setValue("creatorId", currentUserId);
+      fetchCreatorInfo(currentUserId);
     }
-    
+
     fetchPaymentTerms();
-  }, [data, type, reset]);
+  }, [data, type, reset, setValue, currentUserId]);
+
+  useEffect(() => {
+    if (selectedCreatorId) {
+      fetchCreatorInfo(selectedCreatorId);
+    }
+  }, [selectedCreatorId]);
+
+  useEffect(() => {
+    if (selectedRecipientId) {
+      fetchRecipientInfo(selectedRecipientId);
+    }
+  }, [selectedRecipientId]);
 
   const onSubmit = async (formData: Inputs) => {
     const submitPromise = new Promise(async (resolve, reject) => {
@@ -249,12 +243,18 @@ const OfferForm = ({ type, data }: OfferFormProps) => {
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Oluşturan Bilgileri</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InputField
-            label="Oluşturan Kişi ID"
-            name="creatorId"
-            register={register}
-            error={errors?.creatorId}
-          />
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-500">Oluşturan Kişi ID</label>
+            <input
+              type="text"
+              {...register("creatorId")}
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm bg-gray-50"
+              readOnly
+            />
+            {errors?.creatorId && (
+              <span className="text-xs text-red-500">{errors.creatorId.message}</span>
+            )}
+          </div>
 
           {creatorInfo && (
             <>
@@ -354,10 +354,7 @@ const OfferForm = ({ type, data }: OfferFormProps) => {
             >
               <option value="">Seçiniz</option>
               {paymentTerms.map((term) => (
-                <option
-                  key={term.id}
-                  value={term.id}
-                >
+                <option key={term.id} value={term.id}>
                   {term.name}
                 </option>
               ))}
@@ -396,12 +393,10 @@ const OfferForm = ({ type, data }: OfferFormProps) => {
           </button>
         </div>
 
-        {/* // OfferForm.tsx içinde, teklif kalemleri kısmında */}
         {fields.map((field, index) => (
           <div key={field.id} className="p-4 border rounded-lg space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-sm font-medium">Kalem #{index + 1}</h3>
-              {/* Talep kalemlerini silemesin */}
               {!field.isFromRequest && fields.length > 1 && (
                 <button
                   type="button"
@@ -419,7 +414,7 @@ const OfferForm = ({ type, data }: OfferFormProps) => {
                 register={register}
                 name={`offerSub.${index}.serviceId`}
                 error={errors.offerSub?.[index]?.serviceId}
-                defaultValue={field.serviceId}  // value yerine defaultValue kullanıyoruz
+                defaultValue={field.serviceId}
                 disabled={field.isFromRequest}
               />
 

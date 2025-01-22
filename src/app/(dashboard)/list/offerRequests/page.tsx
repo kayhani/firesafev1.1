@@ -6,26 +6,26 @@ import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
-    OfferRequests,
-    User,
-    Institutions,
-    RequestSub,
-    Prisma,
-    Services,
-    UserRole
+  OfferRequests,
+  User,
+  Institutions,
+  RequestSub,
+  Prisma,
+  Services,
+  UserRole
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
 
-type OfferRequestList = OfferRequests & { 
-    creatorIns: Institutions 
-  } & { 
-    creator: User 
-  } & {
-    RequestSub: (RequestSub & {
-      service: Services
-    })[];
-  };
+type OfferRequestList = OfferRequests & {
+  creatorIns: Institutions
+} & {
+  creator: User
+} & {
+  RequestSub: (RequestSub & {
+    service: Services
+  })[];
+};
 
 const columns = [
   {
@@ -56,15 +56,15 @@ const canViewOfferRequests = (
   currentUserInstitutionId: string | null | undefined
 ) => {
   if (userRole === UserRole.ADMIN) return true;
-  
+
   if (
-    (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 || 
-     userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2)
+    (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 ||
+      userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2)
   ) return true;
-  
+
   if (
-    (userRole === UserRole.MUSTERI_SEVIYE1 || 
-     userRole === UserRole.MUSTERI_SEVIYE2) &&
+    (userRole === UserRole.MUSTERI_SEVIYE1 ||
+      userRole === UserRole.MUSTERI_SEVIYE2) &&
     currentUserInstitutionId === requestCreatorInsId
   ) return true;
 
@@ -110,10 +110,13 @@ const OfferRequestListPage = async ({
 }) => {
   const session = await auth();
   const currentUserRole = session?.user?.role as UserRole;
-  
+
   const currentUser = session?.user?.email ? await prisma.user.findUnique({
     where: { email: session.user.email }
   }) : null;
+
+  const currentUserId = currentUser?.id; // Bu satırı ekledik
+
 
   const currentUserInstitutionId = currentUser?.institutionId;
 
@@ -140,10 +143,12 @@ const OfferRequestListPage = async ({
           )}
 
           {canCreateOffer(currentUserRole) && (
-            <FormModal 
-              table="offer" 
-              type="create" 
-              data={{ 
+            <FormModal
+              table="offer"
+              type="create"
+              currentUserRole={currentUserRole}
+              currentUserId={currentUserId || ''}
+              data={{
                 requestId: item.id,
                 recipientId: item.creator.id,
                 recipientInsId: item.creatorInsId,
@@ -158,7 +163,7 @@ const OfferRequestListPage = async ({
                   unitPrice: '',
                   isFromRequest: true
                 }))
-              }} 
+              }}
             >
               <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaYellow">
                 <Image src="/offer.png" alt="" width={20} height={20} />
@@ -181,8 +186,8 @@ const OfferRequestListPage = async ({
 
   // Role göre filtreleme
   if (currentUserRole !== UserRole.ADMIN && currentUserInstitutionId) {
-    if (currentUserRole === UserRole.MUSTERI_SEVIYE1 || 
-        currentUserRole === UserRole.MUSTERI_SEVIYE2) {
+    if (currentUserRole === UserRole.MUSTERI_SEVIYE1 ||
+      currentUserRole === UserRole.MUSTERI_SEVIYE2) {
       // Müşteri rolündeki kullanıcılar sadece kendi kurumlarının taleplerini görebilir
       query.creatorInsId = currentUserInstitutionId;
     }
@@ -229,9 +234,9 @@ const OfferRequestListPage = async ({
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       <div className="flex item-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">
-          {currentUserRole === UserRole.ADMIN 
+          {currentUserRole === UserRole.ADMIN
             ? 'Tüm Teklif Talepleri'
-            : currentUserRole.startsWith('MUSTERI') 
+            : currentUserRole.startsWith('MUSTERI')
               ? 'Kurumunuzun Teklif Talepleri'
               : 'Mevcut Teklif Talepleri'}
         </h1>
@@ -247,7 +252,12 @@ const OfferRequestListPage = async ({
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
             {canCreateOfferRequest(currentUserRole) && (
-              <FormModal table="offerRequest" type="create" />
+              <FormModal
+                table="offerRequest"
+                type="create"
+                currentUserRole={currentUserRole}
+                currentUserId={currentUserId || ''}  // currentUserId'yi ekledik
+              />
             )}
           </div>
         </div>

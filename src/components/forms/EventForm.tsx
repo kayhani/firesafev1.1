@@ -1,17 +1,3 @@
-// Bu formda kullanılan API'ler ve componentler biraz daha basit. İşte detaylı dökümü:
-
-// API Endpoints:
-// /api/users/detail/${creatorId} - Oluşturan kişinin detay bilgilerini getiren endpoint
-// /api/appointments - Randevu oluşturma için POST isteği yapılan endpoint
-// /api/appointments/${id} - Randevu güncelleme için PUT isteği yapılan endpoint
-
-// Özel Componentler:
-// InputField - Form inputları için kullanılan temel input bileşeni
-// UserSelect - Kullanıcı seçimi için dropdown bileşeni (burada alıcı kullanıcı seçimi için kullanılıyor)
-// InstitutionSelect - Kurum seçimi için dropdown bileşeni (burada alıcı kurum seçimi için kullanılıyor)
-
-
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,25 +10,17 @@ import InputField from "../InputField";
 import UserSelect from "@/components/UserSelect";
 import InstitutionSelect from "@/components/InstitutionSelect";
 
-// Form validation şeması
 const schema = z.object({
-  // Oluşturan Kişi Bilgileri
   creatorId: z.string().min(1, { message: "Oluşturan kişi seçimi zorunludur" }),
   creatorInsId: z.string().min(1, { message: "Oluşturan kurum seçimi zorunludur" }),
-
-  // Randevu Bilgileri
   title: z.string()
     .min(3, { message: "Başlık en az 3 karakter olmalıdır" })
     .max(100, { message: "Başlık en fazla 100 karakter olabilir" }),
-
   content: z.string()
     .min(10, { message: "İçerik en az 10 karakter olmalıdır" })
     .max(500, { message: "İçerik en fazla 500 karakter olabilir" }),
-
   start: z.string().min(1, { message: "Başlangıç tarihi zorunludur" }),
   end: z.string().min(1, { message: "Bitiş tarihi zorunludur" }),
-
-  // Alıcı Bilgileri
   recipientId: z.string().min(1, { message: "Alıcı kullanıcı seçimi zorunludur" }),
   recipientInsId: z.string().min(1, { message: "Alıcı kurum seçimi zorunludur" })
 });
@@ -52,9 +30,10 @@ type Inputs = z.infer<typeof schema>;
 interface EventFormProps {
   type: "create" | "update";
   data?: any;
+  currentUserId: string;
 }
 
-const EventForm = ({ type, data }: EventFormProps) => {
+const EventForm = ({ type, data, currentUserId }: EventFormProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [creatorInfo, setCreatorInfo] = useState<any>(null);
@@ -70,31 +49,32 @@ const EventForm = ({ type, data }: EventFormProps) => {
     resolver: zodResolver(schema),
     defaultValues: {
       ...data,
+      creatorId: currentUserId,
     },
   });
 
-  // İzlenen form alanları
   const selectedCreatorId = watch("creatorId");
   const selectedRecipientInsId = watch("recipientInsId");
 
-  // Creator ID değiştiğinde bilgileri getir
-  useEffect(() => {
-    if (selectedCreatorId) {
-      fetchCreatorInfo(selectedCreatorId);
-    }
-  }, [selectedCreatorId]);
-
-  // Form yüklendiğinde mevcut verileri doldur
   useEffect(() => {
     if (data && type === "update") {
       reset(data);
       if (data.creatorId) {
         fetchCreatorInfo(data.creatorId);
       }
+    } else {
+      // Create modunda currentUserId'yi set edip bilgileri getir
+      setValue("creatorId", currentUserId);
+      fetchCreatorInfo(currentUserId);
     }
-  }, [data, type, reset]);
+  }, [data, type, reset, currentUserId, setValue]);
 
-  // Creator bilgilerini getir
+  useEffect(() => {
+    if (selectedCreatorId) {
+      fetchCreatorInfo(selectedCreatorId);
+    }
+  }, [selectedCreatorId]);
+
   const fetchCreatorInfo = async (creatorId: string) => {
     try {
       const response = await fetch(`/api/users/detail/${creatorId}`);
@@ -111,25 +91,20 @@ const EventForm = ({ type, data }: EventFormProps) => {
     }
   };
 
-  // Form gönderimi
   const onSubmit = async (formData: Inputs) => {
     const submitPromise = new Promise(async (resolve, reject) => {
       try {
         setLoading(true);
-
-        // Form verilerini konsola yazdıralım (debug için)
         console.log('Form data being submitted:', formData);
 
         const endpoint = type === "create" ? '/api/appointments' : `/api/appointments/${data?.id}`;
         const method = type === "create" ? 'POST' : 'PUT';
 
-        // Form verilerini API'ye göndermeden önce doğrulayalım
         const validationResult = schema.safeParse(formData);
         if (!validationResult.success) {
           throw new Error('Form validation failed');
         }
 
-        // Form verilerini API'ye gönderelim
         const requestData = {
           title: formData.title,
           content: formData.content,
@@ -183,12 +158,18 @@ const EventForm = ({ type, data }: EventFormProps) => {
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Oluşturan Kişi Bilgileri</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InputField
-            label="Oluşturan Kişi ID"
-            name="creatorId"
-            register={register}
-            error={errors?.creatorId}
-          />
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-500">Oluşturan Kişi ID</label>
+            <input
+              type="text"
+              {...register("creatorId")}
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm bg-gray-50"
+              readOnly
+            />
+            {errors?.creatorId && (
+              <span className="text-xs text-red-500">{errors.creatorId.message}</span>
+            )}
+          </div>
 
           {creatorInfo && (
             <>
@@ -273,7 +254,7 @@ const EventForm = ({ type, data }: EventFormProps) => {
             name="recipientInsId"
             error={errors.recipientInsId}
             defaultValue={data?.recipientInsId}
-            showInstitutionName={true} // Bunu ekleyin
+            showInstitutionName={true}
           />
 
           <UserSelect

@@ -1,13 +1,3 @@
-// Bu teklif talebi formu için detaylı döküm:
-// API Endpoints:
-// /api/users/detail/${creatorId} - Talebi oluşturan kişinin detaylarını getiren endpoint
-// /api/offer-requests - Teklif talebi oluşturma endpoint'i (POST)
-// /api/offer-requests/${id} - Teklif talebi güncelleme endpoint'i (PUT)
-
-// Özel Componentler:
-// InputField - Form inputları için temel input bileşeni
-// ServiceSelect - Hizmet seçimi için dropdown bileşeni
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +8,6 @@ import { z } from "zod";
 import toast from 'react-hot-toast';
 import InputField from "../InputField";
 import ServiceSelect from "@/components/ServiceSelect";
-import { Decimal } from "@prisma/client/runtime/library";
 
 // Form validation şeması
 const requestSubSchema = z.object({
@@ -29,21 +18,14 @@ const requestSubSchema = z.object({
 });
 
 const schema = z.object({
-  // Oluşturan Kişi Bilgileri
   creatorId: z.string().min(1, { message: "Oluşturan kişi seçimi zorunludur" }),
   creatorInsId: z.string().min(1, { message: "Oluşturan kurum seçimi zorunludur" }),
-
-  // Teklif Talebi Bilgileri
   start: z.string().min(1, { message: "Başlangıç tarihi zorunludur" }),
   end: z.string().min(1, { message: "Bitiş tarihi zorunludur" }),
   details: z.string()
     .min(10, { message: "Detay en az 10 karakter olmalıdır" })
     .max(500, { message: "Detay en fazla 500 karakter olabilir" }),
-
-  // Status alanı
   status: z.enum(["Aktif", "Pasif", "Beklemede", "Iptal", "TeklifAlindi", "Tamamlandi"]),
-
-  // Alt kalemler
   requestSub: z.array(requestSubSchema).min(1, { message: "En az bir hizmet kalemi eklemelisiniz" })
 });
 
@@ -52,9 +34,10 @@ type Inputs = z.infer<typeof schema>;
 interface OfferRequestFormProps {
   type: "create" | "update";
   data?: any;
+  currentUserId: string; // Yeni eklenen prop
 }
 
-const OfferRequestForm = ({ type, data }: OfferRequestFormProps) => {
+const OfferRequestForm = ({ type, data, currentUserId }: OfferRequestFormProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [creatorInfo, setCreatorInfo] = useState<any>(null);
@@ -70,8 +53,8 @@ const OfferRequestForm = ({ type, data }: OfferRequestFormProps) => {
   } = useForm<Inputs>({
     resolver: zodResolver(schema),
     defaultValues: {
-      ...data,
       status: type === "create" ? "Beklemede" : (data?.status || "Beklemede"),
+      creatorId: currentUserId, // currentUserId'yi ekledik
       requestSub: data?.requestSub || [{
         requiredDate: '',
         serviceId: '',
@@ -81,24 +64,13 @@ const OfferRequestForm = ({ type, data }: OfferRequestFormProps) => {
     },
   });
 
-  // Alt kalemler için field array
   const { fields, append, remove } = useFieldArray({
     control,
     name: "requestSub"
   });
 
-  // İzlenen form alanları
   const selectedCreatorId = watch("creatorId");
 
-  // Creator ID değiştiğinde bilgileri getir
-  useEffect(() => {
-    if (selectedCreatorId) {
-      fetchCreatorInfo(selectedCreatorId);
-    }
-  }, [selectedCreatorId]);
-
-  // Form yüklendiğinde mevcut verileri doldur
-  // Form yüklendiğinde mevcut verileri doldur
   useEffect(() => {
     if (data && type === "update") {
       // Tarihleri doğru formata çeviriyoruz
@@ -117,14 +89,22 @@ const OfferRequestForm = ({ type, data }: OfferRequestFormProps) => {
         setValue(`requestSub.${index}.detail`, sub.detail || '');
       });
 
-      // Creator bilgilerini getir
       if (data.creatorId) {
         fetchCreatorInfo(data.creatorId);
       }
+    } else {
+      // Create modunda currentUserId'yi set edip bilgileri getir
+      setValue("creatorId", currentUserId);
+      fetchCreatorInfo(currentUserId);
     }
-  }, [data, type, setValue]);
+  }, [data, type, setValue, currentUserId]);
 
-  // Creator bilgilerini getir
+  useEffect(() => {
+    if (selectedCreatorId) {
+      fetchCreatorInfo(selectedCreatorId);
+    }
+  }, [selectedCreatorId]);
+
   const fetchCreatorInfo = async (creatorId: string) => {
     try {
       const response = await fetch(`/api/users/detail/${creatorId}`);
@@ -141,11 +121,6 @@ const OfferRequestForm = ({ type, data }: OfferRequestFormProps) => {
     }
   };
 
-  // Form gönderimi
-  // Decimal import'unu kaldırıyoruz
-  // import { Decimal } from "@prisma/client/runtime/library"; 
-
-  // onSubmit fonksiyonunu güncelliyoruz
   const onSubmit = async (formData: Inputs) => {
     const submitPromise = new Promise(async (resolve, reject) => {
       try {
@@ -158,7 +133,7 @@ const OfferRequestForm = ({ type, data }: OfferRequestFormProps) => {
           ...formData,
           requestSub: formData.requestSub.map(sub => ({
             ...sub,
-            quantity: sub.quantity // string olarak bırakıyoruz, API'de dönüştüreceğiz
+            quantity: sub.quantity
           }))
         };
 
@@ -204,12 +179,18 @@ const OfferRequestForm = ({ type, data }: OfferRequestFormProps) => {
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Oluşturan Kişi Bilgileri</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InputField
-            label="Oluşturan Kişi ID"
-            name="creatorId"
-            register={register}
-            error={errors?.creatorId}
-          />
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-500">Oluşturan Kişi ID</label>
+            <input
+              type="text"
+              {...register("creatorId")}
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm bg-gray-50"
+              readOnly
+            />
+            {errors?.creatorId && (
+              <span className="text-xs text-red-500">{errors.creatorId.message}</span>
+            )}
+          </div>
 
           {creatorInfo && (
             <>
@@ -311,7 +292,7 @@ const OfferRequestForm = ({ type, data }: OfferRequestFormProps) => {
                 register={register}
                 name={`requestSub.${index}.serviceId`}
                 error={errors.requestSub?.[index]?.serviceId}
-                value={field.serviceId} // defaultValue yerine value kullanıyoruz
+                value={field.serviceId}
               />
 
               <div className="flex flex-col gap-2">

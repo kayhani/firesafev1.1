@@ -62,22 +62,56 @@ const OfferRequestForm = dynamic(() => import("./forms/OfferRequestForm"), {
 
 // Form bileşenlerini mapping objesi
 const forms: {
-  [key: string]: (type: "create" | "update", data?: any, currentUserRole?: UserRole) => JSX.Element;
+  [key: string]: (
+    type: "create" | "update",
+    data?: any,
+    currentUserRole?: UserRole,
+    currentUserId?: string  // currentUserId parametresini ekledik
+  ) => JSX.Element;
 } = {
   user: (type, data, currentUserRole) => <UserForm type={type} data={data} currentUserRole={currentUserRole} />,
   customer: (type, data) => <CustomerForm type={type} data={data} />,
   provider: (type, data) => <ProviderForm type={type} data={data} />,
-  device: (type, data) => <DeviceForm type={type} data={data} />,
+  device: (type, data, currentUserRole, currentUserId) => (
+    <DeviceForm
+      type={type}
+      data={data}
+      currentUserId={currentUserId || ''}
+    />
+  ),
   maintenance: (type, data) => <MaintenanceForm type={type} data={data} />,
-  notification: (type, data) => <NotificationForm type={type} data={data} />,
-  event: (type, data) => <EventForm type={type} data={data} />,
-  offer: (type, data) => <OfferForm type={type} data={data} />,
+  notification: (type, data, currentUserRole, currentUserId) => (
+    <NotificationForm 
+      type={type} 
+      data={data} 
+      currentUserId={currentUserId || ''} 
+    />
+  ),
+  event: (type, data, currentUserRole, currentUserId) => (
+    <EventForm 
+      type={type} 
+      data={data} 
+      currentUserId={currentUserId || ''} 
+    />
+  ),
+  offer: (type, data, currentUserRole, currentUserId) => (
+    <OfferForm 
+      type={type} 
+      data={data} 
+      currentUserId={currentUserId || ''} 
+    />
+  ),
   institution: (type, data) => <InstitutionForm type={type} data={data} />,
   pinstitution: (type, data) => <PInstitutionForm type={type} data={data} />,
   isgmember: (type, data) => <IsgMemberForm type={type} data={data} />,
   log: (type, data) => <LogForm type={type} data={data} />,
-  offerRequest: (type, data) => <OfferRequestForm type={type} data={data} />,
-
+  offerRequest: (type, data, currentUserRole, currentUserId) => (
+    <OfferRequestForm
+      type={type}
+      data={data}
+      currentUserId={currentUserId || ''}
+    />
+  ),
 };
 
 type TableType =
@@ -105,11 +139,12 @@ interface FormModalProps {
   data?: any;
   id?: string;
   currentUserRole?: UserRole;
+  currentUserId?: string; // Yeni eklenen prop
   children?: React.ReactNode; // Bu satırı ekleyin
 
 }
 
-const FormModal = ({ table, type, data, id, currentUserRole  }: FormModalProps) => {
+const FormModal = ({ table, type, data, id, currentUserRole, currentUserId }: FormModalProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -285,9 +320,9 @@ const FormModal = ({ table, type, data, id, currentUserRole  }: FormModalProps) 
     if (type === "delete" && id) {
       return <DeleteForm />;
     }
-  
+
     if (type === "create" || type === "update") {
-      return forms[table](type, data, currentUserRole); // şimdi currentUserRole'e erişebiliriz
+      return forms[table](type, data, currentUserRole, currentUserId);
     }
 
     return <p className="text-center text-red-500">Form bulunamadı!</p>;

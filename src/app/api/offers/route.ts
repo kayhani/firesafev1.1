@@ -48,6 +48,7 @@ export async function POST(request: Request) {
             creatorInsId: body.creatorInsId,
             recipientId: body.recipientId,
             recipientInsId: body.recipientInsId,
+            requestId: body.requestId,
           },
         });
         console.log('7. Ana teklif oluşturuldu:', offer);

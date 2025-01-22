@@ -1,19 +1,4 @@
-// Bu form birkaç API endpoint'i ve özel component kullanıyor. İşte detaylı bir dökümü:
-// API Endpoints:
-// /api/users/detail/${ownerId} - Cihaz sahibinin detay bilgilerini getiren endpoint
-// /api/devices - Cihaz oluşturma için POST isteği yapılan endpoint
-// /api/devices/${id} - Cihaz güncelleme için PUT isteği yapılan endpoint
-
-// Özel Componentler:
-// InputField - Form inputları için kullanılan temel input bileşeni
-// DeviceTypeSelect - Cihaz tiplerini seçmek için dropdown bileşeni
-// DeviceFeatureSelect - Seçilen cihaz tipine göre özellikleri gösteren dropdown bileşeni
-// UserSelect - Kullanıcı seçimi için dropdown bileşeni
-// InstitutionSelect - Kurum seçimi için dropdown bileşeni
-// IsgMemberSelect - ISG üyesi seçimi için dropdown bileşeni
-
-
-
+// DeviceForm.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,39 +15,25 @@ import UserSelect from "@/components/UserSelect";
 import InstitutionSelect from "@/components/InstitutionSelect";
 import IsgMemberSelect from "@/components/IsgMemberSelect";
 
-// Form validation şeması
 const schema = z.object({
-  // Cihaz Sahibi Bilgileri
   ownerId: z.string().min(1, { message: "Cihaz sahibi ID'si zorunludur" }),
   ownerInstId: z.string().min(1, { message: "Sahip kurum seçimi zorunludur" }),
-
-  // Temel Cihaz Bilgileri
   serialNumber: z.string()
     .min(3, { message: "Seri No min 3 karakter uzunluğunda olmalı!" })
     .max(20, { message: "Seri No maks 20 karakter uzunluğunda olmalı!" }),
   typeId: z.string().min(1, { message: "Cihaz tipi seçimi zorunludur" }),
   featureId: z.string().min(1, { message: "Cihaz özelliği seçimi zorunludur" }),
-
-  // Tarih Bilgileri
   productionDate: z.string().min(1, { message: "Üretim tarihi zorunludur" }),
   lastControlDate: z.string().min(1, { message: "Son kontrol tarihi zorunludur" }),
   expirationDate: z.string().min(1, { message: "Son kullanma tarihi zorunludur" }),
   nextControlDate: z.string().min(1, { message: "Sonraki kontrol tarihi zorunludur" }),
-
-  // Konum ve Durum
   location: z.string().min(1, { message: "Konum zorunludur" }),
-  location1: z.string().optional(), // Opsiyonel alan
+  location1: z.string().optional(),
   currentStatus: z.enum(["Aktif", "Pasif"]),
-
-  // Hizmet Sağlayıcı Bilgileri
   providerInstId: z.string().min(1, { message: "Sağlayıcı kurum seçimi zorunludur" }),
   providerId: z.string().min(1, { message: "Hizmet sağlayıcı seçimi zorunludur" }),
-
-  // ISG ve Detay Bilgileri
   isgMemberId: z.string().min(1, { message: "ISG üyesi seçimi zorunludur" }),
   details: z.string().min(1, { message: "Detaylar zorunludur" }),
-
-  // Opsiyonel Alanlar
   photo: z.any().optional()
 });
 
@@ -71,9 +42,10 @@ type Inputs = z.infer<typeof schema>;
 interface DeviceFormProps {
   type: "create" | "update";
   data?: any;
+  currentUserId: string;
 }
 
-const DeviceForm = ({ type, data }: DeviceFormProps) => {
+const DeviceForm = ({ type, data, currentUserId }: DeviceFormProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [ownerInfo, setOwnerInfo] = useState<any>(null);
@@ -89,33 +61,33 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
     resolver: zodResolver(schema),
     defaultValues: {
       currentStatus: "Aktif",
+      ownerId: currentUserId,
       ...data,
     },
   });
 
-  // İzlenen form alanları
   const selectedOwnerId = watch("ownerId");
   const selectedTypeId = watch("typeId");
   const selectedProviderInstId = watch("providerInstId");
 
-  // Owner ID değiştiğinde bilgileri getir
   useEffect(() => {
     if (selectedOwnerId) {
       fetchOwnerInfo(selectedOwnerId);
     }
   }, [selectedOwnerId]);
 
-  // Form yüklendiğinde mevcut verileri doldur
   useEffect(() => {
     if (data && type === "update") {
       reset(data);
       if (data.ownerId) {
         fetchOwnerInfo(data.ownerId);
       }
+    } else {
+      setValue("ownerId", currentUserId);
+      fetchOwnerInfo(currentUserId);
     }
-  }, [data, type, reset]);
+  }, [data, type, reset, currentUserId, setValue]);
 
-  // Owner bilgilerini getir
   const fetchOwnerInfo = async (ownerId: string) => {
     try {
       const response = await fetch(`/api/users/detail/${ownerId}`);
@@ -132,14 +104,12 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
     }
   };
 
-  // Form gönderimi
   const onSubmit = async (formData: Inputs) => {
     const submitPromise = new Promise(async (resolve, reject) => {
       try {
         setLoading(true);
         const submitData = new FormData();
   
-        // Form verilerini FormData'ya dönüştür
         Object.entries(formData).forEach(([key, value]) => {
           if (value instanceof File) {
             submitData.append(key, value);
@@ -148,7 +118,6 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
           }
         });
   
-        // API endpoint'i
         const endpoint = type === "create" ? '/api/devices' : `/api/devices/${data?.id}`;
         const method = type === "create" ? 'POST' : 'PUT';
   
@@ -174,7 +143,6 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
       }
     });
   
-    // Toast bildirimleri
     toast.promise(submitPromise, {
       loading: type === "create" ? 'Cihaz kaydediliyor...' : 'Cihaz güncelleniyor...',
       success: type === "create" ? 'Cihaz başarıyla kaydedildi!' : 'Cihaz başarıyla güncellendi!',
@@ -192,12 +160,18 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Cihaz Sahibi Bilgileri</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InputField
-            label="Cihaz Sahibi ID"
-            name="ownerId"
-            register={register}
-            error={errors?.ownerId}
-          />
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-500">Cihaz Sahibi ID</label>
+            <input
+              type="text"
+              {...register("ownerId")}
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm bg-gray-50"
+              readOnly
+            />
+            {errors?.ownerId && (
+              <span className="text-xs text-red-500">{errors.ownerId.message}</span>
+            )}
+          </div>
 
           {ownerInfo && (
             <>
@@ -329,7 +303,7 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
             register={register}
             name="providerInstId"
             error={errors.providerInstId}
-            defaultValue={data?.providerInstId} // Bunu ekleyelim
+            defaultValue={data?.providerInstId}
           />
 
           <UserSelect
@@ -368,7 +342,6 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
             )}
           </div>
 
-          {/* Fotoğraf Yükleme */}
           <div className="flex flex-col gap-2">
             <label className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer" htmlFor="photo">
               <Image src="/upload.png" alt="" width={28} height={28} />
@@ -385,7 +358,6 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
         </div>
       </div>
 
-      {/* Submit Button */}
       <button
         type="submit"
         disabled={loading}
@@ -397,4 +369,4 @@ const DeviceForm = ({ type, data }: DeviceFormProps) => {
   );
 };
 
-export default DeviceForm;
+export default DeviceForm

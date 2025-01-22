@@ -297,7 +297,12 @@ const EventListPage = async ({
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
             {canCreateAppointment(currentUserRole) && (
-              <FormModal table="event" type="create" />
+              <FormModal
+                table="event"
+                type="create"
+                currentUserRole={currentUserRole}
+                currentUserId={currentUserId || ''}
+              />
             )}
           </div>
         </div>

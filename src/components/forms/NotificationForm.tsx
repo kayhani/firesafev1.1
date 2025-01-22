@@ -1,16 +1,3 @@
-// Bu notification (bildirim) formu için detaylı bir döküm yapalım:
-// API Endpoints:
-// /api/users/detail/${creatorId} - Bildirimi oluşturan kişinin detaylarını getiren endpoint
-// /api/devices?serialNumber=${serialNumber} - Cihaz arama endpoint'i
-// /api/notifications - Bildirim oluşturma endpoint'i (POST)
-// /api/notifications/${id} - Bildirim güncelleme endpoint'i (PUT)
-
-// Özel Componentler:
-// InputField - Form inputları için temel input bileşeni
-// UserSelect - Kullanıcı seçimi için dropdown bileşeni
-// InstitutionSelect - Kurum seçimi için dropdown bileşeni
-// NotificationTypeSelect - Bildirim tipi seçimi için dropdown bileşeni
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,7 +12,6 @@ import UserSelect from "@/components/UserSelect";
 import InstitutionSelect from "@/components/InstitutionSelect";
 import NotificationTypeSelect from "@/components/NotificationTypeSelect";
 
-// Device interface
 interface Device {
   id: string;
   serialNumber: string;
@@ -40,30 +26,18 @@ interface Device {
   location: string;
 }
 
-// Form validation şeması
 const schema = z.object({
-  // Oluşturan Kişi ID'si
   creatorId: z.string().min(1, { message: "Oluşturan kişi ID'si zorunludur" }),
   creatorInsId: z.string().min(1, { message: "Gönderen kurum seçimi zorunludur" }),
-
-  // Cihaz Bilgileri
   deviceSerialNumber: z.string().min(1, { message: "Cihaz seri numarası zorunludur" }),
   deviceId: z.string().min(1, { message: "Cihaz ID zorunludur" }),
   deviceTypeId: z.string().min(1, { message: "Cihaz tipi ID zorunludur" }),
-
-  // Bildirim İçeriği
   content: z.string()
     .min(10, { message: "Bildirim içeriği en az 10 karakter olmalıdır" })
     .max(500, { message: "Bildirim içeriği en fazla 500 karakter olabilir" }),
-
-  // Bildirim Tipi
   typeId: z.string().min(1, { message: "Bildirim tipi seçimi zorunludur" }),
-
-  // Alıcı Bilgileri
   recipientId: z.string().min(1, { message: "Alıcı kullanıcı seçimi zorunludur" }),
   recipientInsId: z.string().min(1, { message: "Alıcı kurum seçimi zorunludur" }),
-
-  // Bildirim Durumu
   isRead: z.enum(["Okundu", "Okunmadi"]).default("Okunmadi")
 });
 
@@ -72,9 +46,10 @@ type Inputs = z.infer<typeof schema>;
 interface NotificationFormProps {
   type: "create" | "update";
   data?: any;
+  currentUserId: string;
 }
 
-const NotificationForm = ({ type, data }: NotificationFormProps) => {
+const NotificationForm = ({ type, data, currentUserId }: NotificationFormProps) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -92,31 +67,16 @@ const NotificationForm = ({ type, data }: NotificationFormProps) => {
     resolver: zodResolver(schema),
     defaultValues: {
       isRead: "Okunmadi",
+      creatorId: currentUserId,
       ...data,
     },
   });
 
-  // İzlenen form alanları
   const selectedCreatorId = watch("creatorId");
   const deviceSerialNumber = watch("deviceSerialNumber");
   const selectedRecipientInsId = watch("recipientInsId");
   const [debouncedSerialNumber] = useDebounce(deviceSerialNumber, 500);
 
-  // Creator ID değiştiğinde bilgileri getir
-  useEffect(() => {
-    if (selectedCreatorId) {
-      fetchCreatorInfo(selectedCreatorId);
-    }
-  }, [selectedCreatorId]);
-
-  // Device Serial Number değişimi izleme
-  useEffect(() => {
-    if (debouncedSerialNumber) {
-      fetchDeviceInfo(debouncedSerialNumber);
-    }
-  }, [debouncedSerialNumber]);
-
-  // Form yüklendiğinde mevcut verileri doldur
   useEffect(() => {
     if (data && type === "update") {
       reset(data);
@@ -126,10 +86,25 @@ const NotificationForm = ({ type, data }: NotificationFormProps) => {
       if (data.deviceSerialNumber) {
         fetchDeviceInfo(data.deviceSerialNumber);
       }
+    } else {
+      // Create modunda currentUserId'yi set edip bilgileri getir
+      setValue("creatorId", currentUserId);
+      fetchCreatorInfo(currentUserId);
     }
-  }, [data, type, reset]);
+  }, [data, type, reset, currentUserId, setValue]);
 
-  // Creator bilgilerini getir
+  useEffect(() => {
+    if (selectedCreatorId) {
+      fetchCreatorInfo(selectedCreatorId);
+    }
+  }, [selectedCreatorId]);
+
+  useEffect(() => {
+    if (debouncedSerialNumber) {
+      fetchDeviceInfo(debouncedSerialNumber);
+    }
+  }, [debouncedSerialNumber]);
+
   const fetchCreatorInfo = async (creatorId: string) => {
     try {
       const response = await fetch(`/api/users/detail/${creatorId}`);
@@ -146,7 +121,6 @@ const NotificationForm = ({ type, data }: NotificationFormProps) => {
     }
   };
 
-  // Cihaz bilgilerini getir
   const fetchDeviceInfo = async (serialNumber: string) => {
     if (!serialNumber || serialNumber.length < 3) {
       setDeviceInfo(null);
@@ -162,7 +136,6 @@ const NotificationForm = ({ type, data }: NotificationFormProps) => {
       const data = await response.json();
       setDeviceInfo(data);
 
-      // Form alanlarını otomatik doldur
       setValue("deviceId", data.id);
       setValue("deviceTypeId", data.type.id);
 
@@ -178,7 +151,6 @@ const NotificationForm = ({ type, data }: NotificationFormProps) => {
     }
   };
 
-  // Form gönderimi
   const onSubmit = async (formData: Inputs) => {
     if (!deviceInfo) {
       toast.error('Lütfen geçerli bir cihaz seçin');
@@ -234,12 +206,18 @@ const NotificationForm = ({ type, data }: NotificationFormProps) => {
       <div className="space-y-4">
         <h2 className="text-sm font-medium text-gray-500">Oluşturan Kişi Bilgileri</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InputField
-            label="Oluşturan Kişi ID"
-            name="creatorId"
-            register={register}
-            error={errors?.creatorId}
-          />
+          <div className="flex flex-col gap-2">
+            <label className="text-xs text-gray-500">Oluşturan Kişi ID</label>
+            <input
+              type="text"
+              {...register("creatorId")}
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm bg-gray-50"
+              readOnly
+            />
+            {errors?.creatorId && (
+              <span className="text-xs text-red-500">{errors.creatorId.message}</span>
+            )}
+          </div>
 
           {creatorInfo && (
             <>
@@ -392,9 +370,8 @@ const NotificationForm = ({ type, data }: NotificationFormProps) => {
             )}
           </div>
         </div>
-      </div>  {/* Bu div kapanışı eksikti */}
-
-
+      </div>
+ 
       {/* Submit Button */}
       <button
         type="submit"
@@ -405,6 +382,6 @@ const NotificationForm = ({ type, data }: NotificationFormProps) => {
       </button>
     </form>
   );
-};
-
-export default NotificationForm;
+ };
+ 
+ export default NotificationForm;
