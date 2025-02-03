@@ -4,13 +4,16 @@ import React, { useState } from 'react';
 import { QrReader } from 'react-qr-reader';
 import { useRouter } from 'next/navigation';
 
-const QRScanner = ({ onClose }) => {
+interface QRScannerProps {
+  onClose: () => void;
+}
+
+const QRScanner: React.FC<QRScannerProps> = ({ onClose }) => {
   const router = useRouter();
   const [error, setError] = useState('');
 
-  const handleScan = (result) => {
+  const handleScan = (result: any) => {
     if (result) {
-      // QR kod içindeki URL'yi kontrol et
       if (result?.text?.includes('/list/devices/')) {
         router.push(result.text);
         onClose();
@@ -18,7 +21,7 @@ const QRScanner = ({ onClose }) => {
     }
   };
 
-  const handleError = (err) => {
+  const handleError = (err: string | Error) => {
     console.error(err);
     setError('Kamera erişiminde hata oluştu.');
   };
@@ -40,7 +43,8 @@ const QRScanner = ({ onClose }) => {
           <QrReader
             constraints={{ facingMode: 'environment' }}
             onResult={handleScan}
-            onError={handleError}
+            scanDelay={500}
+            ViewFinder={() => <div className="border-2 border-blue-500 rounded-lg absolute inset-0 m-8" />}
             className="w-full h-full"
           />
         </div>

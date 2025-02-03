@@ -4,9 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import QRCode from 'qrcode';
+import { Devices, DeviceTypes } from '@prisma/client';
+
+type DeviceWithType = Devices & {
+  type: DeviceTypes;
+};
 
 const QRCodePrintPage = () => {
-  const [devices, setDevices] = useState([]);
+  const [devices, setDevices] = useState<DeviceWithType[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,19 +21,27 @@ const QRCodePrintPage = () => {
   const fetchDevices = async () => {
     try {
       const response = await fetch('/api/devices/my-devices');
+      if (!response.ok) {
+        throw new Error('Veri çekme hatası');
+      }
       const data = await response.json();
-      setDevices(data);
+      // API'den gelen devices dizisini kullan
+      setDevices(data.devices || []);
     } catch (error) {
       console.error('Cihazlar yüklenirken hata:', error);
+      setDevices([]);
     } finally {
       setLoading(false);
     }
   };
 
   const generatePDF = async () => {
+    if (!devices.length) {
+      console.error('Cihaz bulunamadı');
+      return;
+    }
+
     const pdfDoc = await PDFDocument.create();
-    
-    // Helvetica fontunu ekleyelim
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
     
     let page = pdfDoc.addPage([595, 842]); // A4 points (72 dpi)
@@ -55,7 +68,6 @@ const QRCodePrintPage = () => {
       const x = margin + (col * itemWidth);
       const y = page.getHeight() - (margin + (row * itemHeight) + qrSize);
 
-      // QR kodu oluştur
       const qrDataUrl = await QRCode.toDataURL(`${window.location.origin}/list/devices/${device.id}`, {
         width: qrSize,
         margin: 1
@@ -70,11 +82,9 @@ const QRCodePrintPage = () => {
         height: qrSize,
       });
 
-      // Türkçe karakterleri ASCII'ye dönüştür
       const serialNumber = device.serialNumber;
-      const name = device.name ? convertToASCII(device.name) : '';
+      const name = device.type?.name ? convertToASCII(device.type.name) : '';
 
-      // Metin ekle
       page.drawText(serialNumber, {
         x: x + 5,
         y: y - 15,
@@ -82,12 +92,14 @@ const QRCodePrintPage = () => {
         font: helveticaFont
       });
 
-      page.drawText(name, {
-        x: x + 5,
-        y: y - 30,
-        size: 10,
-        font: helveticaFont
-      });
+      if (name) {
+        page.drawText(name, {
+          x: x + 5,
+          y: y - 30,
+          size: 10,
+          font: helveticaFont
+        });
+      }
     }
 
     const pdfBytes = await pdfDoc.save();
@@ -102,9 +114,8 @@ const QRCodePrintPage = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  // Türkçe karakterleri ASCII'ye dönüştürme fonksiyonu
-  const convertToASCII = (text) => {
-    const turkishChars = {
+  const convertToASCII = (text: string) => {
+    const turkishChars: { [key: string]: string } = {
       'ı': 'i', 'İ': 'I', 'ş': 's', 'Ş': 'S',
       'ğ': 'g', 'Ğ': 'G', 'ü': 'u', 'Ü': 'U',
       'ö': 'o', 'Ö': 'O', 'ç': 'c', 'Ç': 'C'
@@ -115,6 +126,16 @@ const QRCodePrintPage = () => {
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Yükleniyor...</div>;
+  }
+
+  if (!devices.length) {
+    return (
+      <div className="p-6">
+        <div className="text-center text-gray-500">
+          Görüntülenecek cihaz bulunamadı.
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -143,7 +164,7 @@ const QRCodePrintPage = () => {
             />
             <div className="mt-2 text-center">
               <p className="font-medium">{device.serialNumber}</p>
-              <p className="text-gray-600">{device.name}</p>
+              <p className="text-gray-600">{device.type?.name}</p>
             </div>
           </div>
         ))}

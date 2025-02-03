@@ -1,36 +1,39 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import prisma from "@/lib/prisma";
-import { auth } from "@/auth";
-import { ITEM_PER_PAGE } from "@/lib/settings";
-import {
-  DeviceTypes,
-  DeviceFeatures,
-  User,
-  Institutions,
-  IsgMembers,
-  Devices,
-  Prisma,
-  UserRole,
-} from "@prisma/client";
+import { UserRole, Devices, DeviceTypes, DeviceFeatures, User, Institutions, IsgMembers } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Camera } from 'lucide-react';
 
-// QRScanner'ı dinamik olarak import ediyoruz
 const QRScanner = dynamic(() => import('@/components/QRScanner'), {
   ssr: false
 });
 
-type DeviceList = Devices & { type: DeviceTypes } & {
+type DeviceWithRelations = Devices & {
+  type: DeviceTypes;
   feature: DeviceFeatures;
-} & { owner: User } & { ownerIns: Institutions } & { isgMember: IsgMembers };
+  owner: User;
+  ownerIns: Institutions;
+  isgMember: IsgMembers;
+};
+
+interface PageProps {
+  searchParams: {
+    page?: string;
+    search?: string;
+    institutionFilter?: string;
+    ownerId?: string;
+    providerId?: string;
+    ownerInstId?: string;
+    [key: string]: string | undefined;
+  };
+}
 
 const columns = [
   {
@@ -65,10 +68,10 @@ const columns = [
 ];
 
 const canViewDevices = (
-  userRole: UserRole,
+  userRole: UserRole | null,
   deviceOwnerId: string | null,
   deviceProviderId: string | null,
-  currentUserId: string | null | undefined
+  currentUserId: string | null
 ) => {
   if (userRole === UserRole.ADMIN) return true;
 
@@ -92,9 +95,9 @@ const canViewDevices = (
 };
 
 const canDeleteDevice = (
-  userRole: UserRole,
+  userRole: UserRole | null,
   deviceOwnerId: string | null,
-  currentUserId: string | null | undefined
+  currentUserId: string | null
 ) => {
   if (userRole === UserRole.ADMIN) return true;
 
@@ -108,7 +111,9 @@ const canDeleteDevice = (
   return false;
 };
 
-const canCreateDevice = (userRole: UserRole) => {
+const canCreateDevice = (userRole: UserRole | null) => {
+  if (!userRole) return false;
+  
   const authorizedRoles: Array<UserRole> = [
     UserRole.ADMIN,
     UserRole.MUSTERI_SEVIYE1
@@ -116,25 +121,20 @@ const canCreateDevice = (userRole: UserRole) => {
   return authorizedRoles.includes(userRole);
 };
 
-const DeviceListPage = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | undefined };
-}) => {
+const DeviceListPage = ({ searchParams }: PageProps) => {
+  const [data, setData] = useState<DeviceWithRelations[]>([]);
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
-  const session = await auth();
-  const currentUserRole = session?.user?.role as UserRole;
 
-  const currentUser = session?.user?.email ? await prisma.user.findUnique({
-    where: { email: session.user.email }
-  }) : null;
-
-  const currentUserId = currentUser?.id;
+  const page = searchParams?.page ? parseInt(searchParams.page) : 1;
 
   const renderRow = (
-    item: DeviceList,
-    userRole: UserRole,
-    userId: string | null | undefined
+    item: DeviceWithRelations,
+    userRole: UserRole | null,
+    userId: string | null
   ) => (
     <tr
       key={item.id}
@@ -157,7 +157,7 @@ const DeviceListPage = async ({
       </td>
       <td className="hidden md:table-cell">{item.feature.name}</td>
       <td className="hidden md:table-cell">
-        {item.lastControlDate.toLocaleDateString()}
+        {new Date(item.lastControlDate).toLocaleDateString()}
       </td>
       <td className="hidden md:table-cell">{item.currentStatus}</td>
       <td>
@@ -177,75 +177,31 @@ const DeviceListPage = async ({
     </tr>
   );
 
-  const { page, ...queryParams } = searchParams;
-  const p = page ? parseInt(page) : 1;
+  useEffect(() => {
+    fetchDevices();
+  }, [page, searchParams]);
 
-  const query: Prisma.DevicesWhereInput = {};
-
-  if (currentUserRole !== UserRole.ADMIN && currentUserId) {
-    if (currentUserRole === UserRole.MUSTERI_SEVIYE1 ||
-      currentUserRole === UserRole.MUSTERI_SEVIYE2) {
-      query.ownerId = currentUserId;
-    } else if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 ||
-      currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
-      query.providerId = currentUserId;
-    }
-  }
-
-  if (queryParams) {
-    for (const [key, value] of Object.entries(queryParams)) {
-      if (value !== undefined) {
-        switch (key) {
-          case "ownerId":
-            const ownerId = value;
-            if (!ownerId) {
-              query.ownerId = ownerId;
-            }
-            break;
-          case "providerId":
-            const providerId = value;
-            if (!providerId) {
-              query.providerId = providerId;
-            }
-            break;
-          case "ownerInstId":
-            const ownerInstId = value;
-            if (!ownerInstId) {
-              query.ownerInstId = ownerInstId;
-            }
-            break;
-          case "institutionFilter":
-            const institutionId = value;
-            if (institutionId) {
-              query.OR = [
-                { ownerInstId: institutionId },
-                { providerInstId: institutionId }
-              ];
-            }
-            break;
-          case "search":
-            query.serialNumber = { contains: value, mode: "insensitive" };
-            break;
-        }
+  const fetchDevices = async () => {
+    try {
+      const response = await fetch('/api/devices/my-devices');
+      if (!response.ok) {
+        throw new Error('Veri çekme hatası');
       }
+      const result = await response.json();
+      setData(result.devices);
+      setCount(result.count);
+      setCurrentUserRole(result.currentUserRole);
+      setCurrentUserId(result.currentUserId);
+    } catch (error) {
+      console.error('Cihazlar yüklenirken hata:', error);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  const [data, count] = await prisma.$transaction([
-    prisma.devices.findMany({
-      where: query,
-      include: {
-        type: true,
-        feature: true,
-        owner: true,
-        ownerIns: true,
-        isgMember: true,
-      },
-      take: ITEM_PER_PAGE,
-      skip: ITEM_PER_PAGE * (p - 1),
-    }),
-    prisma.devices.count({ where: query }),
-  ]);
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">Yükleniyor...</div>;
+  }
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -253,7 +209,7 @@ const DeviceListPage = async ({
         <h1 className="hidden md:block text-lg font-semibold">
           {currentUserRole === UserRole.ADMIN
             ? 'Tüm Yangın Güvenlik Önlemleri'
-            : currentUserRole.startsWith('MUSTERI')
+            : currentUserRole?.toString().startsWith('MUSTERI')
               ? 'Sahip Olduğunuz Yangın Güvenlik Önlemleri'
               : 'Hizmet Verdiğiniz Yangın Güvenlik Önlemleri'}
         </h1>
@@ -277,11 +233,12 @@ const DeviceListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
+            // FormModal çağrısını şöyle güncelleyelim
             {canCreateDevice(currentUserRole) && (
               <FormModal
                 table="device"
                 type="create"
-                currentUserRole={currentUserRole}
+                currentUserRole={currentUserRole || undefined}
                 currentUserId={currentUserId || ''}
               />
             )}
@@ -297,7 +254,7 @@ const DeviceListPage = async ({
         />
       </div>
 
-      <Pagination page={p} count={count} />
+      <Pagination page={page} count={count} />
 
       {showScanner && (
         <QRScanner onClose={() => setShowScanner(false)} />
