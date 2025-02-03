@@ -15,6 +15,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { QRCodeSVG } from 'qrcode.react';
 
 const isAuthorized = (
   currentUserRole: UserRole,
@@ -112,13 +113,14 @@ const SingleDevicePage = async ({
                 className="w-36 h-36 rounded-full object-cover"
               />
               <br></br>
-              <Image
-                src="/qrcode1.png"
-                alt=""
-                width={144}
-                height={144}
-                className="w-24 h-24 object-cover"
-              />
+              <div className="w-24 h-24">
+                <QRCodeSVG
+                  value={`https://localhost:3000/list/devices/${device.id}`}
+                  size={96}
+                  level={'H'}
+                  includeMargin={true}
+                />
+              </div>
             </div>
             <div className="w-2/3 flex flex-col justify-between gap-4">
               <div className="flex items-center gap-4">

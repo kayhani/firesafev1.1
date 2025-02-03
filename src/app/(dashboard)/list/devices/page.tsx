@@ -1,3 +1,5 @@
+'use client';
+
 import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
@@ -17,6 +19,14 @@ import {
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { Camera } from 'lucide-react';
+
+// QRScanner'ı dinamik olarak import ediyoruz
+const QRScanner = dynamic(() => import('@/components/QRScanner'), {
+  ssr: false
+});
 
 type DeviceList = Devices & { type: DeviceTypes } & {
   feature: DeviceFeatures;
@@ -62,7 +72,6 @@ const canViewDevices = (
 ) => {
   if (userRole === UserRole.ADMIN) return true;
 
-  // Müşteri rolündeki kullanıcılar sadece sahip oldukları cihazları görebilir
   if (
     (userRole === UserRole.MUSTERI_SEVIYE1 ||
       userRole === UserRole.MUSTERI_SEVIYE2) &&
@@ -71,7 +80,6 @@ const canViewDevices = (
     return true;
   }
 
-  // Hizmet sağlayıcı rolündeki kullanıcılar sadece hizmet verdikleri cihazları görebilir
   if (
     (userRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 ||
       userRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) &&
@@ -90,7 +98,6 @@ const canDeleteDevice = (
 ) => {
   if (userRole === UserRole.ADMIN) return true;
 
-  // Sadece SEVIYE1 müşteriler sahip oldukları cihazları silebilir
   if (
     userRole === UserRole.MUSTERI_SEVIYE1 &&
     deviceOwnerId === currentUserId
@@ -114,6 +121,7 @@ const DeviceListPage = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
+  const [showScanner, setShowScanner] = useState(false);
   const session = await auth();
   const currentUserRole = session?.user?.role as UserRole;
 
@@ -174,15 +182,12 @@ const DeviceListPage = async ({
 
   const query: Prisma.DevicesWhereInput = {};
 
-  // ADMIN değilse, role göre filtreleme yap
   if (currentUserRole !== UserRole.ADMIN && currentUserId) {
     if (currentUserRole === UserRole.MUSTERI_SEVIYE1 ||
       currentUserRole === UserRole.MUSTERI_SEVIYE2) {
-      // Müşteri rolündeki kullanıcılar sadece sahip oldukları cihazları görebilir
       query.ownerId = currentUserId;
     } else if (currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE1 ||
       currentUserRole === UserRole.HIZMETSAGLAYICI_SEVIYE2) {
-      // Hizmet sağlayıcı rolündeki kullanıcılar sadece hizmet verdikleri cihazları görebilir
       query.providerId = currentUserId;
     }
   }
@@ -209,7 +214,6 @@ const DeviceListPage = async ({
               query.ownerInstId = ownerInstId;
             }
             break;
-
           case "institutionFilter":
             const institutionId = value;
             if (institutionId) {
@@ -256,6 +260,15 @@ const DeviceListPage = async ({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">
+            <button
+              onClick={() => setShowScanner(true)}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaGreen"
+            >
+              <Camera size={16} color="white" />
+            </button>
+            <Link href="/list/devices/qrcodes" className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaBlue">
+              <Image src="/qrcode1.png" alt="QR Kodları" width={14} height={14} />
+            </Link>
             {currentUserRole === UserRole.ADMIN && (
               <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
                 <Image src="/filter.png" alt="" width={14} height={14} />
@@ -269,7 +282,7 @@ const DeviceListPage = async ({
                 table="device"
                 type="create"
                 currentUserRole={currentUserRole}
-                currentUserId={currentUserId || ''} // currentUserId ekleyelim
+                currentUserId={currentUserId || ''}
               />
             )}
           </div>
@@ -285,6 +298,10 @@ const DeviceListPage = async ({
       </div>
 
       <Pagination page={p} count={count} />
+
+      {showScanner && (
+        <QRScanner onClose={() => setShowScanner(false)} />
+      )}
     </div>
   );
 };
