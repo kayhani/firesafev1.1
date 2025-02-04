@@ -25,6 +25,8 @@
     "class-variance-authority": "^0.7.0",
     "cloudinary": "^2.5.1",
     "clsx": "^2.1.1",
+    "html5-qrcode": "^2.3.8",
+    "io": "^1.5.3",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.460.0",
     "moment": "^2.30.1",

@@ -10,6 +10,8 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamic from 'next/dynamic';
 import { Camera } from 'lucide-react';
+import { IoMdQrScanner } from "react-icons/io";
+
 
 const QRScanner = dynamic(() => import('@/components/QRScanner'), {
   ssr: false
@@ -219,11 +221,12 @@ const DeviceListPage = ({ searchParams }: PageProps) => {
             <button
               onClick={() => setShowScanner(true)}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaGreen"
-            >
+            > 
+               <IoMdQrScanner />
               <Camera size={16} color="white" />
             </button>
             <Link href="/list/devices/qrcodes" className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaBlue">
-              <Image src="/qrcode1.png" alt="QR Kodları" width={14} height={14} />
+              <Image src="/qrcode1.png" alt="QR Kodları" width={24} height={24} />
             </Link>
             {currentUserRole === UserRole.ADMIN && (
               <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
@@ -233,7 +236,6 @@ const DeviceListPage = ({ searchParams }: PageProps) => {
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            // FormModal çağrısını şöyle güncelleyelim
             {canCreateDevice(currentUserRole) && (
               <FormModal
                 table="device"

@@ -10,11 +10,11 @@ async function main() {
   console.log('Veritabanı temizlendi')
 
   // Admin kullanıcısı oluştur
-  const adminPassword = await hash('1070Frt86', 10)
+  const adminPassword = await hash('aoyzhgaunn', 10)
   const admin = await prisma.user.create({
     data: {
-      name: 'Fırat Salmanoğlu',
-      email: 'firatsalmanoglu@gmail.com',
+      name: 'Ayhan Ugur',
+      email: 'ayhan.ugur.35@gmail.com',
       password: adminPassword,
       role: 'ADMIN',
       
