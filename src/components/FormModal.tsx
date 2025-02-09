@@ -48,7 +48,7 @@ const PInstitutionForm = dynamic(() => import("./forms/PInstitutionForm"), {
   loading: () => <p className="text-center py-4">Yükleniyor...</p>,
 });
 
-const IsgMemberForm = dynamic(() => import("./forms/IsgMemberForm"), {
+const IsgMemberForm = dynamic(() => import("./forms/IsgMemberForms"), {
   loading: () => <p className="text-center py-4">Yükleniyor...</p>,
 });
 
