@@ -68,7 +68,7 @@ const QRCodePrintPage = () => {
       const x = margin + (col * itemWidth);
       const y = page.getHeight() - (margin + (row * itemHeight) + qrSize);
 
-      const qrDataUrl = await QRCode.toDataURL(`npm/list/devices/${device.id}`, {
+      const qrDataUrl = await QRCode.toDataURL(`/list/devices/${device.id}`, {
         width: qrSize,
         margin: 1
       });
