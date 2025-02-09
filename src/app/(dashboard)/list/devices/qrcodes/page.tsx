@@ -14,6 +14,17 @@ const QRCodePrintPage = () => {
   const [devices, setDevices] = useState<DeviceWithType[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Base URL'yi belirleme fonksiyonu
+  const getBaseUrl = () => {
+    // Production ortamında firesafe.com.tr, development ortamında localhost:3000
+    return process.env.NEXT_PUBLIC_BASE_URL || 'https://firesafe.com.tr';
+  };
+
+  // Device URL'sini oluşturan yardımcı fonksiyon
+  const createDeviceUrl = (deviceId: string) => {
+    return `${getBaseUrl()}/list/devices/${deviceId}`;
+  };
+
   useEffect(() => {
     fetchDevices();
   }, []);
@@ -25,7 +36,6 @@ const QRCodePrintPage = () => {
         throw new Error('Veri çekme hatası');
       }
       const data = await response.json();
-      // API'den gelen devices dizisini kullan
       setDevices(data.devices || []);
     } catch (error) {
       console.error('Cihazlar yüklenirken hata:', error);
@@ -68,7 +78,8 @@ const QRCodePrintPage = () => {
       const x = margin + (col * itemWidth);
       const y = page.getHeight() - (margin + (row * itemHeight) + qrSize);
 
-      const qrDataUrl = await QRCode.toDataURL(`/list/devices/${device.id}`, {
+      // QR kod URL'sini createDeviceUrl fonksiyonu ile oluştur
+      const qrDataUrl = await QRCode.toDataURL(createDeviceUrl(device.id), {
         width: qrSize,
         margin: 1
       });
@@ -157,7 +168,7 @@ const QRCodePrintPage = () => {
             className="flex flex-col items-center bg-white p-4 rounded-lg shadow"
           >
             <QRCodeSVG
-              value={`${window.location.origin}/list/devices/${device.id}`}
+              value={createDeviceUrl(device.id)}
               size={120}
               level="H"
               includeMargin={true}
