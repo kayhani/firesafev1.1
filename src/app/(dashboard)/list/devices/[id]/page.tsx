@@ -115,7 +115,7 @@ const SingleDevicePage = async ({
               <br></br>
               <div className="w-24 h-24">
                 <QRCodeSVG
-                  value={`https://localhost:3000/list/devices/${device.id}`}
+                  value={`/list/devices/${device.id}`}
                   size={96}
                   level={'H'}
                   includeMargin={true}

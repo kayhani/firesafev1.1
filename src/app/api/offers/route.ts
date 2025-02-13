@@ -78,8 +78,11 @@ export async function POST(request: Request) {
 
         const createdSubItems = await Promise.all(offerSubPromises);
         console.log('11. Tüm alt kalemler oluşturuldu:', createdSubItems);
-
+   
         // Bildirim oluşturma
+        const notificationType = await tx.notificationTypes.findFirstOrThrow({
+            where: { name: 'Yeni Teklif' }
+         });
         console.log('12. Bildirim oluşturuluyor');
         const notification = await tx.notifications.create({
           data: {
@@ -90,7 +93,7 @@ export async function POST(request: Request) {
             recipientInsId: body.recipientInsId,
             notificationDate: new Date(),
             isRead: 'Okunmadi',
-            typeId: 'cm636qhdi0004rfy8v4clkz1j'
+            typeId: notificationType.id,
           }
         }).then(result => {
           console.log('13. Bildirim oluşturuldu:', result);

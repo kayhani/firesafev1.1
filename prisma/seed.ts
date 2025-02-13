@@ -52,16 +52,7 @@ async function main() {
   })
   console.log('Device types olusturuldu:', servicess)
 
-  const notificationtype = await prisma.notificationTypes.createMany({
-    data: [
-        {name : "Arıza"},
-        {name : "Yaklaşan Bakım Tarihi"},
-        {name : "Bakım Gerekli"},
-        {name : "Güvenlik Uyarısı"},
-        {name : "Yer Değişikliği"},
-    ]
-  })
-  console.log('Device types olusturuldu:', notificationtype)
+  
 
   const devicetype = await prisma.deviceTypes.findMany()
 
@@ -235,7 +226,20 @@ async function main() {
 
     ]
   })
-  console.log('Device types olusturuldu:', paymenttermtype)
+  console.log('Paymentterm type olusturuldu:', paymenttermtype)
+
+  const notificationtype = await prisma.notificationTypes.createMany({
+     data: [
+     {name : "Arıza"},
+     {name : "Yaklaşan Bakım Tarihi"},
+     {name : "Bakım Gerekli"},
+     {name : "Güvenlik Uyarısı"},
+     {name : "Yer Değişikliği"},
+     {name : "Yeni Teklif"}, //YENİ EKLENECEK
+    ]
+    })
+
+    console.log('notificationtype olusturuldu:', notificationtype)
 
   
 }
