@@ -47,6 +47,19 @@ const menuItems = [
           "lowprovider",
         ],
       },
+
+      {
+        icon: "/user.png",
+        label: "ISG Uzmanları",
+        href: "/list/isgmembers",
+        visible: [
+          "admin",
+          "provider",
+          "customer",
+          "lowcustomer",
+          "lowprovider",
+        ],
+      },
       {
         icon: "/user.png",
         label: "Kurumlar",
