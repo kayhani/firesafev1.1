@@ -10,18 +10,44 @@ async function main() {
   console.log('Veritabanı temizlendi')
 
   // Admin kullanıcısı oluştur
-  const adminPassword = await hash('aoyzhgaunn', 10)
-  const admin = await prisma.user.create({
+  const ayhPassword = await hash('Ayh2409', 10)
+  const ayh = await prisma.user.create({
     data: {
       name: 'Ayhan Ugur',
       email: 'ayhan.ugur.35@gmail.com',
-      password: adminPassword,
+      password: ayhPassword,
       role: 'ADMIN',
       
     }
   })
 
-  console.log('Admin kullanıcısı oluşturuldu:', admin)
+   // Admin kullanıcısı oluştur
+   const firatPassword = await hash('Frt2409', 10)
+   const firat = await prisma.user.create({
+     data: {
+       name: 'Ayhan Ugur',
+       email: 'ayhan.ugur.35@gmail.com',
+       password: firatPassword,
+       role: 'ADMIN',
+       
+     }
+   })
+
+   // Admin kullanıcısı oluştur
+   const serkanPassword = await hash('Sk2409', 10)
+   const serkan = await prisma.user.create({
+     data: {
+       name: 'Ayhan Ugur',
+       email: 'ayhan.ugur.35@gmail.com',
+       password: serkanPassword,
+       role: 'ADMIN',
+       
+     }
+   })
+
+  console.log('Admin kullanıcısı oluşturuldu:', ayh)
+  console.log('Admin kullanıcısı oluşturuldu:', firat)
+  console.log('Admin kullanıcısı oluşturuldu:', serkan)
 
 
   const devicetypes = await prisma.deviceTypes.createMany({
