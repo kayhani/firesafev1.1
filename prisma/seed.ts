@@ -26,7 +26,7 @@ async function main() {
    const firat = await prisma.user.create({
      data: {
        name: 'Ayhan Ugur',
-       email: 'ayhan.ugur.35@gmail.com',
+       email: 'firatsalmanoglu@gmail.com',
        password: firatPassword,
        role: 'ADMIN',
        
@@ -38,7 +38,7 @@ async function main() {
    const serkan = await prisma.user.create({
      data: {
        name: 'Ayhan Ugur',
-       email: 'ayhan.ugur.35@gmail.com',
+       email: 'serkan.kormaz@firesafe.com.tr',
        password: serkanPassword,
        role: 'ADMIN',
        
@@ -70,15 +70,6 @@ async function main() {
   })
   console.log('Device types olusturuldu:', devicetypes)
 
-
-  const servicess = await prisma.services.createMany({
-    data: [
-        {name : "Bakım"},
-    ]
-  })
-  console.log('Device types olusturuldu:', servicess)
-
-  
 
   const devicetype = await prisma.deviceTypes.findMany()
 
@@ -242,6 +233,14 @@ async function main() {
   })
 
   console.log('Operations olusturuldu:', operation)
+
+  const servicess = await prisma.services.createMany({
+    data: [
+        {name : "Bakım"},
+    ]
+  })
+  console.log('Servicess types olusturuldu:', servicess)
+
 
   const paymenttermtype = await prisma.paymentTermTypes.createMany({
     data: [
