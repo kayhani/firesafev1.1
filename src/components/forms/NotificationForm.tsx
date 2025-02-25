@@ -178,8 +178,7 @@ const NotificationForm = ({ type, data, currentUserId }: NotificationFormProps) 
         }
 
         await response.json();
-        router.refresh();
-        router.push('/list/notifications');
+        window.location.href = '/list/notifications';
         resolve('İşlem başarıyla tamamlandı');
       } catch (error) {
         console.error('Hata:', error);

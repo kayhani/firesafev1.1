@@ -180,8 +180,8 @@ const MaintenanceForm = ({ type, data }: { type: "create" | "update"; data?: any
           const result = await response.json().catch(() => ({}));
           
           toast.success(type === "create" ? "Bakım kartı oluşturuldu" : "Bakım kartı güncellendi");
-          router.refresh();
-          router.push('/list/maintenances');
+          await response.json();
+          window.location.href = '/list/maintenances';
         } catch (error) {
           console.error('Error:', error);
           toast.error(error instanceof Error ? error.message : "Bir hata oluştu");

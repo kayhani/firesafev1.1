@@ -132,8 +132,7 @@ const DeviceForm = ({ type, data, currentUserId }: DeviceFormProps) => {
         }
   
         await response.json();
-        router.refresh();
-        router.push('/list/devices');
+        window.location.href = '/list/devices';
         resolve('İşlem başarıyla tamamlandı');
       } catch (error) {
         console.error('Hata:', error);

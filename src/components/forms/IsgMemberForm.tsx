@@ -97,8 +97,8 @@ const IsgMemberForm = ({
         throw new Error(errorData || 'Bir hata oluştu');
       }
 
-      router.push('/list/isgmembers');
-      router.refresh();
+      await response.json();
+      window.location.href = '/list/isgmembers';
 
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Bir hata oluştu');

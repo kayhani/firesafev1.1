@@ -142,8 +142,7 @@ interface UserFormProps {
             const result = await response.json();
             console.log("API Response:", result);
     
-            router.refresh();
-            router.push('/list/users');
+            window.location.href = '/list/users'; 
         } catch (error) {
             console.error('Submit Error:', error);
             alert(type === "create" ? 

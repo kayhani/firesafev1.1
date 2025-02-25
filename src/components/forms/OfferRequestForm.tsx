@@ -151,8 +151,7 @@ const OfferRequestForm = ({ type, data, currentUserId }: OfferRequestFormProps) 
         }
 
         await response.json();
-        router.refresh();
-        router.push('/list/offerRequests');
+        window.location.href = '/list/offerRequests'; 
         resolve('İşlem başarıyla tamamlandı');
       } catch (error) {
         console.error('Hata:', error);

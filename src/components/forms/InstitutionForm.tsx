@@ -95,8 +95,8 @@ const InstitutionForm = ({
                 throw new Error('İşlem başarısız oldu: ' + errorText);
             }
 
-            router.refresh();
-            router.push('/list/institutions');
+            await response.json();
+            window.location.href = '/list/institutions';
         } catch (error) {
             console.error('Error:', error);
             alert(type === "create" ? 'Kurum oluşturulurken bir hata oluştu!' : 'Kurum güncellenirken bir hata oluştu!');

@@ -130,8 +130,7 @@ const EventForm = ({ type, data, currentUserId }: EventFormProps) => {
         }
 
         await response.json();
-        router.refresh();
-        router.push('/list/events');
+        window.location.href = '/list/events';
         resolve('İşlem başarıyla tamamlandı');
       } catch (error) {
         console.error('Hata:', error);
