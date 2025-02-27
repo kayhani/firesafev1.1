@@ -197,7 +197,7 @@ const FormModal = ({ table, type, data, id, currentUserRole, currentUserId }: Fo
           usePathParam: false
         },
         isgmember: {
-          endpoint: 'isgmembers',
+          endpoint: 'isgMembers',
           usePathParam: false
         },
         user: {

@@ -109,6 +109,7 @@ const SingleOfferRequestPage = async ({
                   <FormModal
                     table="offer"
                     type="create"
+                    currentUserId={currentUserId}
                     data={{
                       requestId: request.id,
                       recipientId: request.creator.id,

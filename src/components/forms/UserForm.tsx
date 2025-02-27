@@ -20,11 +20,15 @@ const formSchema = z.object({
         .optional()
         .or(z.literal('')),
     bloodType: z.enum(["ARhP", "ARhN", "BRhP", "BRhN", "ABRhP", "ABRhN", "ORhP", "ORhN"])
-        .optional(),
+        .optional()
+        .nullable()
+        .or(z.literal('')),
     birthday: z.string()
         .optional(),
     sex: z.enum(["Erkek", "Kadin", "Diger"])
-        .optional(),
+        .optional()
+        .nullable()
+        .or(z.literal('')),
     phone: z.string()
         .refine((val) => {
             if (!val) return true;

@@ -118,7 +118,8 @@ const canCreateDevice = (userRole: UserRole | null) => {
   
   const authorizedRoles: Array<UserRole> = [
     UserRole.ADMIN,
-    UserRole.MUSTERI_SEVIYE1
+    UserRole.MUSTERI_SEVIYE1,
+    UserRole.MUSTERI_SEVIYE2
   ];
   return authorizedRoles.includes(userRole);
 };
